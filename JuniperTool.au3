@@ -87,13 +87,18 @@ Local $txtKeyword = GUICtrlCreateInput("Name of step", 230, 230,200)
 Local $addStepBtn = GUICtrlCreateButton("Add", 440, 230,60,60)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
 Local $deleteStepBtn = GUICtrlCreateButton("Delete", 510, 230,60,60)
+GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
+Local $downBtn = GUICtrlCreateButton("Down", 440, 300,60,60)
+Local $upBtn = GUICtrlCreateButton("Up", 510, 300,60,60)
+GUICtrlSetState($downBtn, $GUI_DISABLE)
+GUICtrlSetState($upBtn, $GUI_DISABLE)
 Local $stepList = GUICtrlCreateListView("", 20, 260, 410, 220)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
 _GUICtrlListView_InsertColumn($stepList, 1, "Keyword", 150)
 _GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 200)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
-Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 440, 360, 140, 120)
+Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 440, 370, 130, 110)
 GUICtrlSetImage($generateStepBtn, "generate.ico",221,0)
 
 GUICtrlCreateGroup("Output path", 10, 500, 580, 50)
@@ -118,6 +123,8 @@ GUICtrlSetOnEvent($addStepBtn, "addStep")
 GUICtrlSetOnEvent($deleteStepBtn, "deleteStep")
 GUICtrlSetOnEvent($hDelKey, "deleteStep")
 GUICtrlSetOnEvent($idComboBox, "changeComboStep")
+GUICtrlSetOnEvent($downBtn, "moveDownStep")
+GUICtrlSetOnEvent($upBtn, "moveUpStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
 GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
 Local $userNameValue = ''
@@ -143,10 +150,59 @@ Func RunP()
 EndFunc
 
 #Region List Step Control
+Func moveDownStep()
+   $listCount = _GUICtrlListView_GetItemCount($stepList)
+   $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
+
+   if $Selected + 1 < $listCount Then
+	  _GUICtrlListView_BeginUpdate($stepList)
+	  $currentArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $Selected+0),'|')
+	  $nextArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $Selected+1),'|')
+	  ; update value for next row
+	  _GUICtrlListView_AddSubItem($stepList, $Selected + 1, $currentArr[2], 1)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected + 1, $currentArr[3], 2, 2)
+	  ; update value for current row
+	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $nextArr[2], 1)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $nextArr[3], 2, 2)
+	  updateIndexNumber()
+	  _GUICtrlListView_EndUpdate($stepList)
+   EndIf
+
+EndFunc
+Func moveUpStep()
+   $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
+
+   if $Selected - 1 >= 0 Then
+	  _GUICtrlListView_BeginUpdate($stepList)
+	  $currentArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $Selected+0),'|')
+	  $prevArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $Selected-1),'|')
+	  ; update value for prev row
+	  _GUICtrlListView_AddSubItem($stepList, $Selected - 1, $currentArr[2], 1)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected - 1, $currentArr[3], 2, 2)
+	  ; update value for current row
+	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $prevArr[2], 1)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $prevArr[3], 2, 2)
+	  updateIndexNumber()
+	  _GUICtrlListView_EndUpdate($stepList)
+   EndIf
+EndFunc
 Func updateIndexNumber()
-   For $x = 0 To _GUICtrlListView_GetItemCount($stepList) - 1
+   $listCount = _GUICtrlListView_GetItemCount($stepList)
+   For $x = 0 To $listCount - 1
 	   _GUICtrlListView_AddSubItem($stepList, $x, $x+1,0)
    Next
+   if $listCount>=2 Then
+	  GUICtrlSetState($downBtn, $GUI_ENABLE)
+	  GUICtrlSetState($upBtn, $GUI_ENABLE)
+   Else
+	  GUICtrlSetState($downBtn, $GUI_DISABLE)
+	  GUICtrlSetState($upBtn, $GUI_DISABLE)
+   EndIf
+   if $listCount>0 Then
+	  GUICtrlSetState($deleteStepBtn, $GUI_ENABLE)
+   Else
+	  GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
+   EndIf
 EndFunc
 Func _Arrange_ListStep()
    If _GUICtrlListView_GetItemCount($stepList) > 0 Then
@@ -181,6 +237,7 @@ Func addStep()
    $txtValue = GUICtrlRead($txtKeyword)
    if StringInStr($stepsWithoutKeyword, $comboValue) Then
 	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "| ", $stepList)
+	  updateIndexNumber()
    Else
 	  If $txtValue='' Or StringInStr($txtValue,' ') Then
 		 MsgBox($MB_ICONERROR, "", "Invalid name of keyword !")
