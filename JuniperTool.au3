@@ -13,6 +13,16 @@
 #include <misc.au3>
 
 Opt("GUIOnEventMode", 1);
+#Region Loading
+ProgressOn("Load Juniper Tool", "Openning Program", "0%"); Just to let more beautiful
+For $i = 10 To 100 Step 10
+    Sleep(100)
+    ProgressSet($i, $i & "%")
+Next
+ProgressSet(100, "Full Load", "Complete")
+Sleep(500)
+ProgressOff()
+#EndRegion
 
 #Region Login GUI
 $FormLogin = GUICreate("Login to Juniper Tool", 320, 150, -1, -1); begining of Login
