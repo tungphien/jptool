@@ -217,6 +217,8 @@ def main():
   testcase_name = args.testcase_name
   file_name = args.file_name
   username = args.username
+  if not os.path.isdir('output'):
+    os.mkdir('output')
   if yaml_file is not None and start_unique_id is not None:
     update_unique_ids_and_format(yaml_file=yaml_file, uid=start_unique_id)
   if stepStr is not None:
