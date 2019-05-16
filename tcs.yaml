@@ -12,7 +12,7 @@ Granular_tests:
                      add_timestamp:
                          run_event:
                              keyword: On CLI
-                             devices: device
+                             device: device
                              command: 'set cli timestamp'
                          unique_id: 2
                  #####
@@ -58,7 +58,7 @@ Granular_tests:
                      step_name:
                          run_event: # --> need to update: On CLI or On Config
                              keyword: # --> need to update 
-                             devices: device
+                             device: device
                              command: # --> need to update 
                          unique_id: 1
                  #####

@@ -13,7 +13,7 @@ Granular_tests:
                              keyword: On CLI
                              device: device
                              command: 'set cli timestamp'
-                         unique_id: 1
+                         unique_id: 15000
                  2:
                      check_bgp_peering:
                          create_dictionary_and_check:
@@ -23,7 +23,7 @@ Granular_tests:
                                        - check_keyword_1 # --> need to update
                                        - check_keyword_2 # --> need to update
                              devices: device
-                         unique_id: 2
+                         unique_id: 15001
                  3:
                      revert_config:
                          run_event:
@@ -31,5 +31,5 @@ Granular_tests:
                              device: device
                              command: 'rollback 1,
                                        commit'
-                         unique_id: 3
+                         unique_id: 15002
 
