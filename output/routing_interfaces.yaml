@@ -1,0 +1,18 @@
+---
+
+Granular_tests:
+
+    #Owner: --> need to update
+    name_of_testcase:
+        common_variables:
+                 device: device
+        steps:
+                 1:
+                     revert_config:
+                         run_event:
+                             keyword: On Config
+                             device: device
+                             command: 'rollback 1,
+                                       commit'
+                         unique_id: 1
+
