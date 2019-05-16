@@ -109,6 +109,7 @@ GUICtrlSetOnEvent($deleteStepBtn, "deleteStep")
 GUICtrlSetOnEvent($hDelKey, "deleteStep")
 GUICtrlSetOnEvent($idComboBox, "changeComboStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
+GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
 Local $userNameValue = ''
 
 While True
@@ -120,7 +121,6 @@ Func _Login()
 	  $userNameValue=GUICtrlRead($USERNAME)
 	  GUICtrlSetData($lblUserName,'Welcome to: '& $userNameValue)
 	  GUIDelete($FormLogin)
-	  MsgBox(-1,"Junipuer tool","Login Successful")
 	  RunP()
    Else
 	  $userNameValue=''
