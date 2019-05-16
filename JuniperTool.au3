@@ -8,7 +8,8 @@
 #include <FileConstants.au3>
 #include <GuiListView.au3>
 #include <ColorConstants.au3>
-
+#include <misc.au3>
+Opt("GUIOnEventMode", 1);
 
 #Region Read config json
 $data = FileRead("config.json")
@@ -51,7 +52,12 @@ $txtKeyword = GUICtrlCreateInput("Name of step", 230, 230,200)
 $addStepBtn = GUICtrlCreateButton("Add", 440, 230,60,60)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
 $deleteStepBtn = GUICtrlCreateButton("Delete", 510, 230,60,60)
-$stepList = GUICtrlCreateListView("#|Step|Keyword", 20, 260, 410, 220, $LVS_SHOWSELALWAYS)
+$stepList = GUICtrlCreateListView("", 20, 260, 410, 220)
+; Add columns
+_GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
+_GUICtrlListView_InsertColumn($stepList, 1, "Keyword", 150)
+_GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 150)
+_GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
 $generateStepBtn = GUICtrlCreateButton("Generate testcase", 440, 360, 140, 120)
 GUICtrlSetImage($generateStepBtn, "generate.ico",221,0)
 
@@ -64,7 +70,59 @@ $PYTHON_CMD = getPythonVersion()
 GUICtrlSetData($lblPythonVersionValue,$PYTHON_FULLTEXT_VERSION)
 GUISetState(@SW_SHOW, $hGUI)
 #EndRegion
+#Region Delete Key detect
+$hDelKey = GUICtrlCreateDummy()
+Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
+GUISetAccelerators($AccelKeys)
+#EndRegion
 
+GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
+GUICtrlSetOnEvent($closeBtn, "_Close")
+GUICtrlSetOnEvent($browseFileBtn, "displayBrowseFile")
+GUICtrlSetOnEvent($formatFileBtn, "doFormat")
+GUICtrlSetOnEvent($generateStepBtn, "doGenerateSteps")
+GUICtrlSetOnEvent($addStepBtn, "addStep")
+GUICtrlSetOnEvent($deleteStepBtn, "deleteStep")
+GUICtrlSetOnEvent($hDelKey, "deleteStep")
+GUICtrlSetOnEvent($idComboBox, "changeComboStep")
+GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
+While True
+    Sleep(200)
+ WEnd
+
+#Region List Step Control
+Func updateIndexNumber()
+   For $x = 0 To _GUICtrlListView_GetItemCount($stepList) - 1
+	   _GUICtrlListView_AddSubItem($stepList, $x, $x+1,0)
+   Next
+EndFunc
+Func _Arrange_ListStep()
+    $Selected = _GUICtrlListView_GetHotItem($stepList)
+    If $Selected = -1 then Return
+    While _IsPressed(1)
+    WEnd
+    $Dropped = _GUICtrlListView_GetHotItem($stepList)
+    If $Dropped > -1 then
+        _GUICtrlListView_BeginUpdate($stepList)
+        If $Selected < $Dropped Then
+			_GUICtrlListView_InsertItem($stepList, "", $Dropped + 1)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 0),0)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 1), 1)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 2), 2, 2)
+            _GUICtrlListView_SetItemChecked($stepList, $Dropped + 1, _GUICtrlListView_GetItemChecked($stepList, $Selected))
+            _GUICtrlListView_DeleteItem($stepList, $Selected)
+        ElseIf $Selected > $Dropped Then
+            _GUICtrlListView_InsertItem($stepList, "", $Dropped)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 0),0)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 1), 1)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 2), 2, 2)
+            _GUICtrlListView_SetItemChecked($stepList, $Dropped, _GUICtrlListView_GetItemChecked($stepList, $Selected + 1))
+            _GUICtrlListView_DeleteItem($stepList, $Selected + 1)
+	    EndIf
+	    updateIndexNumber()
+        _GUICtrlListView_EndUpdate($stepList)
+    EndIf
+EndFunc
 
 Func addStep()
    $comboValue = GUICtrlRead($idComboBox)
@@ -81,7 +139,8 @@ Func addStep()
 EndFunc
 Func deleteStep()
    $iIndex = _GUICtrlListView_GetSelectedIndices($stepList)
-    _GUICtrlListView_DeleteItem($stepList, $iIndex)
+   _GUICtrlListView_DeleteItem($stepList, $iIndex)
+   updateIndexNumber()
 EndFunc
 Func changeComboStep()
    $comboValue = GUICtrlRead($idComboBox)
@@ -97,27 +156,7 @@ Func changeComboStep()
 	  GUICtrlSetState($txtKeyword, $GUI_ENABLE)
    EndIf
 EndFunc
-While 1
-    Switch GUIGetMsg()
-        Case $GUI_EVENT_CLOSE, $closeBtn
-                    ExitLoop
-        Case $helpBtn
-            displayHelp()
-        Case $browseFileBtn
-            displayBrowseFile()
-        Case $formatFileBtn
-            doFormat()
-	    Case $generateStepBtn
-		    doGenerateSteps()
-	    Case $addStepBtn
-			addStep()
-	    Case $deleteStepBtn
-			deleteStep()
-	    Case $idComboBox
-		    changeComboStep()
-
-    EndSwitch
-WEnd
+#EndRegion
 
 Func validateFormBeforeGenerate()
    $testcaseName = GUICtrlRead($txtTestcaseName)
@@ -248,4 +287,7 @@ Func getOutputOfProcess($iPID)
 EndFunc
 Func displayHelp()
    MsgBox(0, "About Jtool!", "Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique."& @CRLF &"- Generate common steps for testcase.")
+EndFunc
+Func _Close()
+    Exit(0)
 EndFunc
