@@ -1,0 +1,25 @@
+---
+
+Granular_tests:
+
+    # Owner: tnguyenngoc
+    name_of_testcase:
+        common_variables:
+                 device: device
+        steps:
+                 1:
+                     add_timestamp:
+                         run_event:
+                             keyword: On CLI
+                             devices: device
+                             command: 'set cli timestamp'
+                         unique_id: 1
+                 2:
+                     revert_config:
+                         run_event:
+                             keyword: On Config
+                             device: device
+                             command: 'rollback 1,
+                                       commit'
+                         unique_id: 2
+

@@ -150,9 +150,9 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
     fw.write(line + '\n')
   fw.close()
 
-def generateStep(stepStr, file_name, testcase_name):
+def generateStep(stepStr, file_name, testcase_name,username):
   arrStepObjs = stepStr.split('@')
-  stepsToWrite = getHeaderContent(testcase_name)
+  stepsToWrite = getHeaderContent(testcase_name,username)
   for stepObj in arrStepObjs:
     if stepObj!='':
       stepsToWrite = getStepContent({'keyword':stepObj.split('#')[0],'step_name':stepObj.split('#')[1]},stepsToWrite)
@@ -164,7 +164,7 @@ def generateStep(stepStr, file_name, testcase_name):
   fw.close()
   update_unique_ids_and_format(pth_of_file)
 
-def getHeaderContent(testcase_name):
+def getHeaderContent(testcase_name,username):
   result =''
   yaml_file = 'tcs.yaml'
   with open(yaml_file, 'r') as fr:
@@ -178,6 +178,8 @@ def getHeaderContent(testcase_name):
     if write_code_before_step==True:
       if testcase_name is not None:
         line=line.replace('testcase_name',testcase_name)
+      if username is not None:
+        line = line.replace('owner_name', username)
       result = result + line + '\n'
   return result
 
@@ -207,16 +209,18 @@ def main():
   argparser.add_argument('-s', '--step', default=None, help='String of Step in format step#keyword@step1#keyword1@')
   argparser.add_argument('-tn', '--testcase_name', default=None, help='Name of testcase')
   argparser.add_argument('-fn', '--file_name', default=None, help='File name of testcase')
+  argparser.add_argument('-usr', '--username', default=None, help='User name')
   args = argparser.parse_args()
   yaml_file = args.yaml_file
   start_unique_id = args.unique_id
   stepStr= args.step
   testcase_name = args.testcase_name
   file_name = args.file_name
+  username = args.username
   if yaml_file is not None and start_unique_id is not None:
     update_unique_ids_and_format(yaml_file=yaml_file, uid=start_unique_id)
   if stepStr is not None:
-    generateStep(stepStr, file_name, testcase_name)
+    generateStep(stepStr, file_name, testcase_name, username)
 
 
 if __name__ == '__main__':

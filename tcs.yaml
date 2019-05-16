@@ -2,7 +2,7 @@
 
 Granular_tests:
 
-    #Owner: --> need to update
+    # Owner: owner_name
     testcase_name:
         common_variables:
                  device: device

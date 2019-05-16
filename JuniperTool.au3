@@ -1,3 +1,5 @@
+#include <ButtonConstants.au3>
+#include <EditConstants.au3>
 #include "JSON.au3"
 #include <GUIConstantsEx.au3>
 #include <MsgBoxConstants.au3>
@@ -9,38 +11,61 @@
 #include <GuiListView.au3>
 #include <ColorConstants.au3>
 #include <misc.au3>
+
 Opt("GUIOnEventMode", 1);
+
+#Region Login GUI
+$FormLogin = GUICreate("Login to Juniper Tool", 320, 150, -1, -1); begining of Login
+$usernamelabel = GUICtrlCreateLabel("Username:", 20, 20, 52, 17)
+$USERNAME = GUICtrlCreateInput("",  80, 20, 220, 21)
+$passwordlabel = GUICtrlCreateLabel("Password:", 20, 50, 50, 17)
+$PASSWORD = GUICtrlCreateInput("", 80, 50, 220, 21, BitOR($ES_PASSWORD,$ES_AUTOHSCROLL))
+$ButtonOk = GUICtrlCreateButton("&OK", 80, 90, 75, 25, 0)
+$ButtonCancel = GUICtrlCreateButton("&Cancel", 160, 90, 75, 25, 0)
+GUISetState(@SW_SHOW)
+GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
+GUICtrlSetOnEvent($ButtonCancel, "_Close")
+GUICtrlSetOnEvent($ButtonOk, "_Login")
+#Region Enter Key to Login
+Local $hEnterKey = GUICtrlCreateDummy()
+Dim $EnterKeys[1][2]=[["{ENTER}", $hEnterKey]]
+GUISetAccelerators($EnterKeys)
+#EndRegion
+GUICtrlSetOnEvent($hEnterKey, "_Login")
+
+#EndRegion
 
 #Region Read config json
 $data = FileRead("config.json")
 $object = json_decode($data)
 #EndRegion
 
-#Region GUI
+#Region APP GUI
 ;GUI
 Global $hGUI = GUICreate("Juniper Tool - Phiên Ngô", 600, 600)
-$closeBtn = GUICtrlCreateButton("Exit", 510, 560, 80, 30)
-$helpBtn = GUICtrlCreateButton("About", 420, 560, 80, 30)
-Local $lblPythonVersion = GUICtrlCreateLabel(">> Your system is running with python version: ", 10, 570)
-Local $lblPythonVersionValue = GUICtrlCreateLabel("", 230, 570, 100,30)
-$inputFile = GUICtrlCreateInput("Path of yaml file",10, 10, 490)
-$browseFileBtn = GUICtrlCreateButton("Browse file", 510, 10, 80, 30)
+Local $closeBtn = GUICtrlCreateButton("Exit", 510, 560, 80, 30)
+Local $helpBtn = GUICtrlCreateButton("About", 420, 560, 80, 30)
+Local $lblPythonVersionValue = GUICtrlCreateLabel("", 10, 570, 100,30)
+Local $lblUserName = GUICtrlCreateLabel("", 200, 570, 200,30)
+GUICtrlSetColor ($lblUserName, $COLOR_RED )
+Local $inputFile = GUICtrlCreateInput("Path of yaml file",10, 10, 490)
+Local $browseFileBtn = GUICtrlCreateButton("Browse file", 510, 10, 80, 30)
 
 GUICtrlCreateGroup("Actions", 10, 50, 580, 70)
-$formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 75, 180, 30)
+Local $formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 75, 180, 30)
 GUICtrlSetImage($formatFileBtn,"format.ico",221,0)
 
 GUICtrlCreateGroup("Gererate testcase", 10, 150, 580, 340)
 Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 450, 130)
 GUICtrlSetState($openOutputWhenDone, $GUI_CHECKED)
 GUICtrlCreateLabel("Testcase file", 20, 170, 200)
-$cmbFileName = GUICtrlCreateCombo("", 130, 170, 300)
+Local $cmbFileName = GUICtrlCreateCombo("", 130, 170, 300)
 GUICtrlCreateLabel("(*)", 440, 170)
 GUICtrlSetColor (-1, $COLOR_RED )
-$testcase_FileName =json_get($object,'[testcase_filename]')
+Local $testcase_FileName =json_get($object,'[testcase_filename]')
 GUICtrlSetData($cmbFileName, $testcase_FileName, "routing_interfaces.yaml")
 GUICtrlCreateLabel("Name of testcase", 20, 200, 200)
-$txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 200,300)
+Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 200,300)
 GUICtrlCreateLabel("(*)", 440, 200)
 GUICtrlSetColor (-1, $COLOR_RED )
 
@@ -48,35 +73,33 @@ Local $idComboBox = GUICtrlCreateCombo("Select", 20, 230,200)
 Local $stepsWithoutKeyword=json_get($object,'[step_without_keyword]')
 Local $stepsWithKeyword=json_get($object,'[step_with_keyword]')
 GUICtrlSetData($idComboBox, $stepsWithoutKeyword & "|" &  $stepsWithKeyword, "Select")
-$txtKeyword = GUICtrlCreateInput("Name of step", 230, 230,200)
-$addStepBtn = GUICtrlCreateButton("Add", 440, 230,60,60)
+Local $txtKeyword = GUICtrlCreateInput("Name of step", 230, 230,200)
+Local $addStepBtn = GUICtrlCreateButton("Add", 440, 230,60,60)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
-$deleteStepBtn = GUICtrlCreateButton("Delete", 510, 230,60,60)
-$stepList = GUICtrlCreateListView("", 20, 260, 410, 220)
+Local $deleteStepBtn = GUICtrlCreateButton("Delete", 510, 230,60,60)
+Local $stepList = GUICtrlCreateListView("", 20, 260, 410, 220)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
 _GUICtrlListView_InsertColumn($stepList, 1, "Keyword", 150)
 _GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 200)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
-$generateStepBtn = GUICtrlCreateButton("Generate testcase", 440, 360, 140, 120)
+Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 440, 360, 140, 120)
 GUICtrlSetImage($generateStepBtn, "generate.ico",221,0)
 
 GUICtrlCreateGroup("Output path", 10, 500, 580, 50)
-$outputHyperlink = GUICtrlCreateInput("", 20, 520, 550, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
+Local $outputHyperlink = GUICtrlCreateInput("", 20, 520, 550, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
 
 
-$PYTHON_FULLTEXT_VERSION =''
-$PYTHON_CMD = getPythonVersion()
+Local $PYTHON_FULLTEXT_VERSION =''
+Local $PYTHON_CMD = getPythonVersion()
 GUICtrlSetData($lblPythonVersionValue,$PYTHON_FULLTEXT_VERSION)
-GUISetState(@SW_SHOW, $hGUI)
+;GUISetState(@SW_SHOW, $hGUI)
 #EndRegion
 #Region Delete Key detect
-$hDelKey = GUICtrlCreateDummy()
+Local $hDelKey = GUICtrlCreateDummy()
 Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
 #EndRegion
-
-GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
 GUICtrlSetOnEvent($closeBtn, "_Close")
 GUICtrlSetOnEvent($browseFileBtn, "displayBrowseFile")
 GUICtrlSetOnEvent($formatFileBtn, "doFormat")
@@ -86,9 +109,28 @@ GUICtrlSetOnEvent($deleteStepBtn, "deleteStep")
 GUICtrlSetOnEvent($hDelKey, "deleteStep")
 GUICtrlSetOnEvent($idComboBox, "changeComboStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
+Local $userNameValue = ''
+
 While True
-    Sleep(200)
- WEnd
+	Sleep(200)
+WEnd
+Func _Login()
+   Local $users = StringSplit(json_get($object,'[users]'),'|')
+   If _ArraySearch($users,GUICtrlRead($USERNAME)) >= 1 And GUICtrlRead($PASSWORD) = "" Then
+	  $userNameValue=GUICtrlRead($USERNAME)
+	  GUICtrlSetData($lblUserName,'Welcome to: '& $userNameValue)
+	  GUIDelete($FormLogin)
+	  MsgBox(-1,"Junipuer tool","Login Successful")
+	  RunP()
+   Else
+	  $userNameValue=''
+      MsgBox($MB_ICONERROR,"Error"," Username or Password is not correct !")
+   EndIf
+ EndFunc; End login
+
+Func RunP()
+   GUISetState(@SW_SHOW, $hGUI)
+EndFunc
 
 #Region List Step Control
 Func updateIndexNumber()
@@ -97,29 +139,31 @@ Func updateIndexNumber()
    Next
 EndFunc
 Func _Arrange_ListStep()
-    $Selected = _GUICtrlListView_GetHotItem($stepList)
-    If $Selected = -1 then Return
-    While _IsPressed(1)
-    WEnd
-    $Dropped = _GUICtrlListView_GetHotItem($stepList)
-    If $Dropped > -1 then
-        _GUICtrlListView_BeginUpdate($stepList)
-        If $Selected < $Dropped Then
+   If _GUICtrlListView_GetItemCount($stepList) > 0 Then
+	  $Selected = _GUICtrlListView_GetHotItem($stepList)
+	  If $Selected = -1 then Return
+	  While _IsPressed(1)
+	  WEnd
+	  $Dropped = _GUICtrlListView_GetHotItem($stepList)
+	  If $Dropped > -1 then
+		_GUICtrlListView_BeginUpdate($stepList)
+		If $Selected < $Dropped Then
 			_GUICtrlListView_InsertItem($stepList, "", $Dropped + 1)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 1), 1)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 2), 2, 2)
-            _GUICtrlListView_SetItemChecked($stepList, $Dropped + 1, _GUICtrlListView_GetItemChecked($stepList, $Selected))
-            _GUICtrlListView_DeleteItem($stepList, $Selected)
-        ElseIf $Selected > $Dropped Then
-            _GUICtrlListView_InsertItem($stepList, "", $Dropped)
+			_GUICtrlListView_SetItemChecked($stepList, $Dropped + 1, _GUICtrlListView_GetItemChecked($stepList, $Selected))
+			_GUICtrlListView_DeleteItem($stepList, $Selected)
+		ElseIf $Selected > $Dropped Then
+			_GUICtrlListView_InsertItem($stepList, "", $Dropped)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 1), 1)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 2), 2, 2)
-            _GUICtrlListView_SetItemChecked($stepList, $Dropped, _GUICtrlListView_GetItemChecked($stepList, $Selected + 1))
-            _GUICtrlListView_DeleteItem($stepList, $Selected + 1)
-	    EndIf
-	    updateIndexNumber()
-        _GUICtrlListView_EndUpdate($stepList)
-    EndIf
+			_GUICtrlListView_SetItemChecked($stepList, $Dropped, _GUICtrlListView_GetItemChecked($stepList, $Selected + 1))
+			_GUICtrlListView_DeleteItem($stepList, $Selected + 1)
+		EndIf
+		updateIndexNumber()
+		_GUICtrlListView_EndUpdate($stepList)
+	  EndIf
+   EndIf
 EndFunc
 
 Func addStep()
@@ -182,7 +226,7 @@ Func doGenerateSteps()
 		  $strSteps = $strSteps & $txtArr[2] & '#' & $txtArr[3] & '@'
 	  Next
 	  ConsoleWrite($strSteps)
-	  $cmd =$PYTHON_CMD &' main.py -s "' & $strSteps &'" -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'"'
+	  $cmd =$PYTHON_CMD &' main.py -s "' & $strSteps &'" -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
 	  ConsoleWrite($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  ;MsgBox($MB_ICONINFORMATION, "", "The formatted file: output/test_case_generate.yaml")
@@ -193,10 +237,10 @@ Func doGenerateSteps()
 EndFunc
 
 Func doFormat()
-    $filePath = GUICtrlRead($inputFile)
-    if FileExists($filePath)==0 Then
+	$filePath = GUICtrlRead($inputFile)
+	if FileExists($filePath)==0 Then
 	   MsgBox($MB_ICONERROR, "", "File not found !")
-    Else
+	Else
 	   $answer = MsgBox($MB_YESNO, "Confirm", "Do you want to FORMAT and RE-INDEX UNIQUE this file? " & @CRLF & $filePath)
 	   If  $answer = 6 Then ;If select OK
 		   Local $iPID = Run(@ComSpec & " /c " & $PYTHON_CMD &' main.py -f "' & $filePath &'"', "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
@@ -206,34 +250,34 @@ Func doFormat()
 		   GUICtrlSetData($outputHyperlink, $newPath)
 		   OpenFile($newPath)
 	   EndIf
-    EndIf
+	EndIf
 
 EndFunc
 
 Func displayBrowseFile()
 
-    ; Create a constant variable in Local scope of the message to display in FileOpenDialog.
-    Local Const $sMessage = "Hold down Ctrl or Shift to choose multiple files."
+	; Create a constant variable in Local scope of the message to display in FileOpenDialog.
+	Local Const $sMessage = "Hold down Ctrl or Shift to choose multiple files."
 
-    ; Display an open dialog to select a list of file(s).
-    Local $sFileOpenDialog = FileOpenDialog($sMessage, @WindowsDir & "\", "your yaml file (*.yaml)", BitOR($FD_FILEMUSTEXIST, $FD_MULTISELECT))
-    If @error Then
-        ; Display the error message.
-        MsgBox($MB_SYSTEMMODAL, "", "No file(s) were selected.")
+	; Display an open dialog to select a list of file(s).
+	Local $sFileOpenDialog = FileOpenDialog($sMessage, @WindowsDir & "\", "your yaml file (*.yaml)", BitOR($FD_FILEMUSTEXIST, $FD_MULTISELECT))
+	If @error Then
+		; Display the error message.
+		MsgBox($MB_SYSTEMMODAL, "", "No file(s) were selected.")
 
-        ; Change the working directory (@WorkingDir) back to the location of the script directory as FileOpenDialog sets it to the last accessed folder.
-        FileChangeDir(@ScriptDir)
-    Else
-        ; Change the working directory (@WorkingDir) back to the location of the script directory as FileOpenDialog sets it to the last accessed folder.
-        FileChangeDir(@ScriptDir)
+		; Change the working directory (@WorkingDir) back to the location of the script directory as FileOpenDialog sets it to the last accessed folder.
+		FileChangeDir(@ScriptDir)
+	Else
+		; Change the working directory (@WorkingDir) back to the location of the script directory as FileOpenDialog sets it to the last accessed folder.
+		FileChangeDir(@ScriptDir)
 
-        ; Replace instances of "|" with @CRLF in the string returned by FileOpenDialog.
-        $sFileOpenDialog = StringReplace($sFileOpenDialog, "|", @CRLF)
+		; Replace instances of "|" with @CRLF in the string returned by FileOpenDialog.
+		$sFileOpenDialog = StringReplace($sFileOpenDialog, "|", @CRLF)
 
-        ; Display the list of selected files.
-        ;MsgBox($MB_SYSTEMMODAL, "", "You chose the following files:" & @CRLF & $sFileOpenDialog)
+		; Display the list of selected files.
+		;MsgBox($MB_SYSTEMMODAL, "", "You chose the following files:" & @CRLF & $sFileOpenDialog)
 		ControlSetText($hGUI,"",$inputFile,$sFileOpenDialog)
-    EndIf
+	EndIf
 EndFunc
 
 Func getPythonVersion()
@@ -252,7 +296,7 @@ Func getPythonVersion()
 EndFunc
 
 Func _IsChecked($idControlID)
-    Return BitAND(GUICtrlRead($idControlID), $GUI_CHECKED) = $GUI_CHECKED
+	Return BitAND(GUICtrlRead($idControlID), $GUI_CHECKED) = $GUI_CHECKED
 EndFunc   ;==>_IsChecked
 
 Func OpenFile($file_path)
@@ -287,5 +331,5 @@ Func displayHelp()
    MsgBox(0, "About Jtool!", "Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique."& @CRLF &"- Generate common steps for testcase.")
 EndFunc
 Func _Close()
-    Exit(0)
+	Exit(0)
 EndFunc
