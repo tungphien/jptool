@@ -11,6 +11,7 @@
 #include <GuiListView.au3>
 #include <ColorConstants.au3>
 #include <misc.au3>
+#include <Array.au3>
 
 Opt("GUIOnEventMode", 1);
 #Region Loading
@@ -74,9 +75,30 @@ GUICtrlCreateLabel("(*)", 440, 100)
 GUICtrlSetColor (-1, $COLOR_RED )
 
 Local $idComboBox = GUICtrlCreateCombo("", 10, 140,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
-Local $stepsWithoutKeyword=json_get($object,'[step_without_keyword]')
-Local $stepsWithKeyword=json_get($object,'[step_with_keyword]')
-GUICtrlSetData($idComboBox, $stepsWithoutKeyword & "|" &  $stepsWithKeyword)
+;Local $stepsWithoutKeyword=json_get($object,'[step_without_keyword]')
+#Region Read tsc.yaml
+Local $aInput
+$file = "tcs.yaml"
+
+_FileReadToArray($file, $aInput)
+$common_step = ''
+For $i = 1 to UBound($aInput) -1
+    $data = getRegexByGroup($aInput[$i],'#(.*)@',0)
+	if Not $data='' Then
+	  $common_step = $common_step & '|' & $data
+    EndIf
+Next
+Func getRegexByGroup($content, $patten, $groupIndex)
+   $result=''
+   Local $aArray = StringRegExp($content,$patten, $STR_REGEXPARRAYGLOBALMATCH)
+   For $i = 0 To UBound($aArray) - 1
+	  $result = $aArray[$i]
+   Next
+   Return $result
+EndFunc
+#EndRegion
+;Local $stepsWithKeyword=json_get($object,'[step_with_keyword]')
+GUICtrlSetData($idComboBox, $common_step)
 Local $txtKeyword = GUICtrlCreateInput("Name of step", 220, 140,230)
 Local $addStepBtn = GUICtrlCreateButton("Add", 460, 140,60,60)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
@@ -89,11 +111,11 @@ GUICtrlSetState($upBtn, $GUI_DISABLE)
 Local $stepList = GUICtrlCreateListView("", 10, 170, 440, 220)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
-_GUICtrlListView_InsertColumn($stepList, 1, "Keyword", 150)
+_GUICtrlListView_InsertColumn($stepList, 1, "Function of step", 150)
 _GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 220)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
 ; Set default add_timestamp
-GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp| ", $stepList)
+GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
 Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 460, 280, 130, 110)
 GUICtrlSetImage($generateStepBtn, "generate.ico",221,0)
 #EndRegion
@@ -251,16 +273,12 @@ EndFunc
 Func addStep()
    $comboValue = GUICtrlRead($idComboBox)
    $txtValue = GUICtrlRead($txtKeyword)
-   if StringInStr($stepsWithoutKeyword, $comboValue) Then
-	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "| ", $stepList)
-	  updateIndexNumber()
+   If $txtValue='' Or StringInStr($txtValue,' ') Then
+	  MsgBox($MB_ICONERROR, "", "Invalid name of step !")
    Else
-	  If $txtValue='' Or StringInStr($txtValue,' ') Then
-		 MsgBox($MB_ICONERROR, "", "Invalid name of step !")
-	  Else
-		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "|" & $txtValue, $stepList)
-	  EndIf
+	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "|" & $txtValue, $stepList)
    EndIf
+   updateIndexNumber()
 EndFunc
 Func deleteStep()
    $iIndex = _GUICtrlListView_GetSelectedIndices($stepList)
@@ -269,17 +287,12 @@ Func deleteStep()
 EndFunc
 Func changeComboStep()
    $comboValue = GUICtrlRead($idComboBox)
-   If $comboValue=='Select' Then
+   If $comboValue=='' Then
 	  GUICtrlSetState($addStepBtn, $GUI_DISABLE)
    Else
 	  GUICtrlSetState($addStepBtn, $GUI_ENABLE)
    EndIf
-
-   If StringInStr($stepsWithoutKeyword, $comboValue) Then
-	  GUICtrlSetState($txtKeyword, $GUI_DISABLE)
-   Else
-	  GUICtrlSetState($txtKeyword, $GUI_ENABLE)
-   EndIf
+   GUICtrlSetData($txtKeyword,$comboValue)
 EndFunc
 #EndRegion
 
@@ -302,14 +315,14 @@ Func doGenerateSteps()
    If Not $validateMsg='' Then
 	  MsgBox($MB_ICONERROR, "", $validateMsg)
    Else
-	  $strSteps='' ;step#kword@step1#keyword1
+	  Local $arrSteps='' ;[step#kword, step1#keyword1]
 	  For $x = 0 To _GUICtrlListView_GetItemCount($stepList) - 1
 		  $itemText = _GUICtrlListView_GetItemTextString($stepList,$x)
 		  $txtArr = StringSplit($itemText,'|')
-		  $strSteps = $strSteps & $txtArr[2] & '#' & $txtArr[3] & '@'
+		  $arrSteps = $arrSteps & ' ' & $txtArr[2] & '#' & $txtArr[3]
 	  Next
-	  ConsoleWrite($strSteps)
-	  $cmd =$PYTHON_CMD &' main.py -s "' & $strSteps &'" -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
+	  ConsoleWrite($arrSteps)
+	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
 	  ConsoleWrite($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  loadindProgess(500,"Generate testcase","Processing...")

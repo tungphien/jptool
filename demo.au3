@@ -1,42 +1,32 @@
-#include <GUIConstantsEx.au3>
+#include <Array.au3>
+#include <MsgBoxConstants.au3>
 
-Example()
+Local $aArray_Base[2] = ["Org Item 0", "Org item 1"]
+_ArrayDisplay($aArray_Base, "1D - Base array")
 
-Func Example()
-    GUICreate("My GUI Tab") ; will create a dialog box that when displayed is centered
+; Add a single item
+Local $aArray = $aArray_Base
+Local $sSingleFill = "New Item 2"
+_ArrayAdd($aArray, $sSingleFill)
+_ArrayDisplay($aArray, "1D - Single")
 
-    GUISetBkColor(0x00E0FFFF)
-    GUISetFont(9, 300)
+; Add a delimited string - each item adds new element
+$aArray = $aArray_Base
+Local $sFill = ""
+For $i = 1 To 5
+    $sFill &= "New Item " & $i + 1 & "|"
+Next
+$sFill = StringTrimRight($sFill, 1)
+MsgBox($MB_SYSTEMMODAL, "Delimited string to add", $sFill)
+_ArrayAdd($aArray, $sFill)
+_ArrayDisplay($aArray, "1D - Delim string")
 
-    GUICtrlCreateTab(10, 10, 200, 100)
-
-    GUICtrlCreateTabItem("Generate Yaml")
-    GUICtrlCreateLabel("label0", 30, 80, 50, 20)
-    GUICtrlCreateButton("OK0", 20, 50, 50, 20)
-    GUICtrlCreateInput("default", 80, 50, 70, 20)
-
-    GUICtrlCreateTabItem("Format")
-    GUICtrlCreateLabel("label1", 30, 80, 50, 20)
-    GUICtrlCreateCombo("", 20, 50, 60, 120)
-    GUICtrlSetData(-1, "Trids|CyberSlug|Larry|Jon|Tylo|guinness", "Jon") ; default Jon
-    GUICtrlCreateButton("OK1", 80, 50, 50, 20)
-
-    GUICtrlCreateTabItem("tab2")
-    GUICtrlSetState(-1, $GUI_SHOW) ; will be display first
-    GUICtrlCreateLabel("label2", 30, 80, 50, 20)
-    GUICtrlCreateButton("OK2", 140, 50, 50)
-
-    GUICtrlCreateTabItem("") ; end tabitem definition
-
-    GUICtrlCreateLabel("label3", 20, 130, 50, 20)
-
-    GUISetState(@SW_SHOW)
-
-    Local $idMsg
-    ; Loop until the user exits.
-    While 1
-        $idMsg = GUIGetMsg()
-
-        If $idMsg = $GUI_EVENT_CLOSE Then ExitLoop
-    WEnd
-EndFunc   ;==>Example
+; Add a 1D array - each element adds new element
+$aArray = $aArray_Base
+Local $aFill[5]
+For $i = 0 To 4
+    $aFill[$i] = "New Item " & $i + 2
+Next
+_ArrayDisplay($aFill, "Array to add")
+_ArrayAdd($aArray, $aFill)
+_ArrayDisplay($aArray, "1D - 1D array")

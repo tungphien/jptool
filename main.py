@@ -153,8 +153,7 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
   fw.close()
 
 
-def generateStep(stepStr, file_name, testcase_name, username):
-  arrStepObjs = stepStr.split('@')
+def generateStep(arrStepObjs, file_name, testcase_name, username):
   stepsToWrite = getHeaderContent(testcase_name, username)
   for stepObj in arrStepObjs:
     if stepObj != '':
@@ -197,7 +196,7 @@ def getStepContent(stepObj, result):
   found = False
   for line in yaml_content.split('\n'):
     # detect step to write
-    if line.replace('#', '', 1).strip() == stepObj['keyword']:
+    if re.sub(r"#|@", "", line).strip() == stepObj['keyword']:
       found = True
       continue
     if found and '#####' not in line:
@@ -213,14 +212,14 @@ def main():
   argparser = ArgumentParser('python main.py -yaml=<yaml_file>')
   argparser.add_argument('-f', '--yaml_file', default=None, help='yaml file to update and format indent')
   argparser.add_argument('-u', '--unique_id', default=1, help='unique id to start for file')
-  argparser.add_argument('-s', '--step', default=None, help='String of Step in format step#keyword@step1#keyword1@')
+  argparser.add_argument('-s', '--listStep', nargs='+', default=None, help='String of Step in format step#keyword step1#keyword1')
   argparser.add_argument('-tn', '--testcase_name', default=None, help='Name of testcase')
   argparser.add_argument('-fn', '--file_name', default=None, help='File name of testcase')
   argparser.add_argument('-usr', '--username', default=None, help='User name')
   args = argparser.parse_args()
   yaml_file = args.yaml_file
   start_unique_id = args.unique_id
-  stepStr = args.step
+  listStep = args.listStep
   testcase_name = args.testcase_name
   file_name = args.file_name
   username = args.username
@@ -228,8 +227,8 @@ def main():
     os.mkdir('output')
   if yaml_file is not None and start_unique_id is not None:
     update_unique_ids_and_format(yaml_file=yaml_file, uid=start_unique_id)
-  if stepStr is not None:
-    generateStep(stepStr, file_name, testcase_name, username)
+  if listStep is not None:
+    generateStep(listStep, file_name, testcase_name, username)
 
 
 if __name__ == '__main__':

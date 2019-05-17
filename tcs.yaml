@@ -7,23 +7,23 @@ Granular_tests:
         common_variables:
                  device: device
         steps:
-                 #add_timestamp
+                 #add_timestamp@
                  1:
-                     add_timestamp:
+                     step_name:
                          run_event:
                              keyword: On CLI
                              device: device
                              command: 'set cli timestamp'
                          unique_id: 2
                  #####
-                 #get_handle
+                 #get_handle@
                  1:
-                     get_handle:
+                     step_name:
                          run_keyword:
                              keyword: '${dh}    Get Handle    resource=${device}'
                          unique_id: 1
                  #####
-                 #create_dictionary_and_check
+                 #create_dictionary_and_check@
                  1:
                      step_name:
                          create_dictionary_and_check:
@@ -38,7 +38,7 @@ Granular_tests:
                              devices: device
                          unique_id: 1
                  #####
-                 #create_dictionary_and_get
+                 #create_dictionary_and_get@
                  1:
                      step_name:
                          create_dictionary_and_get:
@@ -51,14 +51,14 @@ Granular_tests:
                              return_variable_name: # --> need to update
                          unique_id: 1
                  #####
-                 #run_keyword
+                 #run_keyword@
                  1:
                      step_name:
                          run_keyword:
                              keyword: # --> need to update 
                          unique_id: 1
                  #####
-                 #run_event
+                 #run_event@
                  1:
                      step_name:
                          run_event: # --> need to update: On CLI or On Config
@@ -67,9 +67,9 @@ Granular_tests:
                              command: # --> need to update 
                          unique_id: 1
                  #####
-                 #revert_config
+                 #revert_config@
                  1:
-                     revert_config:
+                     step_name:
                          run_event:
                              keyword: On Config
                              device: device
@@ -77,23 +77,23 @@ Granular_tests:
                                        commit'
                          unique_id: 1
                  #####
-                 #verify_ping_successful
+                 #verify_ping_successful@
                  1:
-                     verify_ping_successful:
+                     step_name:
                          run_keyword:
                              keyword: 'Check Ping Connection    device=${device_handle}    destination=${ip_destination}    source=${ip_source}'
                          unique_id: 1
                  #####
-                #get_device_ip
+                #get_device_ip@
                  1:
-                     get_device_ip:
+                     step_name:
                          run_keyword:
                              keyword: "${device_ip}=    Set Variable    ${tv['${device}__${controller}__mgt-ip']}"
                          unique_id: 1
                 #####
-                #get_junos_version_of_host
+                #get_junos_version_of_host@
                  1:
-                     get_junos_version_of_host:
+                     step_name:
                          create_dictionary_and_get:
                              checks:
                                        - show_version
@@ -102,88 +102,88 @@ Granular_tests:
                              devices: device
                          unique_id: 1
                 #####
-                #execute_ssh_on_shell_server
+                #execute_ssh_on_shell_server@
                  1:
-                     execute_ssh_on_shell_server:
+                     step_name:
                          run_keyword:
                              keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
                          unique_id: 1
                 #####
-                #timeout
-                 1: timeout
+                #timeout@
+                 1:
                      step_name:
                          run_keyword:
                              keyword: 'Sleep    ${sleep_time}'
                          unique_id: 1
                 #####
-                #clear_log_messages
+                #clear_log_messages@
                  1:
-                     clear_log_messages:
+                     step_name:
                          run_event:
                              keyword: On CLI
                              device: device
                              command: 'clear log messages'
                          unique_id: 1
                 #####
-                #get_controller_name
+                #get_controller_name@
                  1:
-                     get_controller_name:
+                     step_name:
                          run_keyword:
                              keyword: '${controller}=    Get Current Controller Name    ${dh}'
                          unique_id: 1
                 #####
-                #get_hostname
+                #get_hostname@
                  1:
-                     get_hostname:
+                     step_name:
                          run_keyword:
                              keyword: "${hostname}=    Set Variable    ${tv['${device}__${controller}__hostname']}"
                          unique_id: 1
                 #####
-                #get_device_username
+                #get_device_username@
                  1:
-                     get_device_username:
+                     step_name:
                          run_keyword:
                              keyword: "${device_username}=    Set Variable    ${tv['${device}__${controller}__user']}"
                          unique_id: 1
                 #####
-                #get_mac_address_of_server
+                #get_mac_address_of_server@
                  1:
-                     get_mac_address_of_server:
+                     step_name:
                          run_keyword:    
                              keyword: '${mac_of_server}    Get Server Mac Address   ifconfig_op=${response}'
                          unique_id: 1
                 #####
-                #connect_shell_to_execute_server
+                #connect_shell_to_execute_server@
                  1:
-                     connect_shell_to_execute_server:
+                     step_name:
                          run_keyword:
                              keyword: '${server-handle}    Connect To Device    host=${server_ip}    os=linux    connect_mode=${ssh_mode}    user=${server_user}    password=${server_password}'
                          unique_id: 60075
                 #####
-                #execute_tcp_dump_command_on_server
+                #execute_tcp_dump_command_on_server@
                  1:
-                     execute_tcp_dump_command_on_server:
+                     step_name:
                          run_keyword:
                              keyword: '${tcp_pid}    Start Tcpdump    device=${dh}    pcapfile=firewall_log.pcap    interface=${intf_name}    port=514'
                          unique_id: 1
                 #####
-                #stop_tcpdump_process
+                #stop_tcpdump_process@
                  1:
-                     stop_tcpdump_process:
+                     step_name:
                          run_keyword:
                              keyword: 'Stop Tcpdump    device=${dh}    pid=${tcp_pid}'
                          unique_id: 1
                 #####
-                #run_ping
+                #run_ping@
                  1:
-                     run_ping:
+                     step_name:
                          run_keyword:
                              keyword: 'Execute Shell Command On Device    ${dh}    command=ping -c 5 ${ipv6_destination} >pingtest.txt    timeout=${60}'
                          unique_id: 1
                 #####
-                #reboot_device
+                #reboot_device@
                  1:
-                     reboot_device:
+                     step_name:
                          run_keyword:
                              keyword: '${status}   Reboot device    ${dh}   mode=cli   wait=180  all=True'
                          unique_id: 1
