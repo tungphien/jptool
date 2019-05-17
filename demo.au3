@@ -1,56 +1,42 @@
-#include <GUIConstants.au3>
-#Include <GuiCombo.au3>
-#include <file.au3>
+#include <GUIConstantsEx.au3>
 
-GUICreate("ICDL Passwords", 200, 200)
-GUISetState (@SW_SHOW)
+Example()
 
-GUICtrlCreateLabel("Students Name:", 15, 15)
-$Username = GUICtrlCreateCombo("", 15, 35, 170, 20)
-$old_string = ""
-GUICtrlCreateLabel("Type the students name in full", 15, 65)
-GUICtrlCreateLAbel("ie: firstname lastname", 15, 80)
+Func Example()
+    GUICreate("My GUI Tab") ; will create a dialog box that when displayed is centered
 
-$GetPassword = GUICtrlCreateButton("Get Password", 50, 160, 100)
+    GUISetBkColor(0x00E0FFFF)
+    GUISetFont(9, 300)
 
-$file = FileOpen(@ScriptDir&"\"&"users.txt", 0)
-If $file = -1 Then
-    MsgBox(0, "Error", "Unable to open file containing passwords")
-    Exit
-EndIf
-$NumberOfLines = _FileCountLines(@ScriptDir&"\"&"users.txt")
+    GUICtrlCreateTab(10, 10, 200, 100)
 
-$LineNumber = 1
-$EndOfFile = ("EndOfFile")
-While 1
-    $Line = FileReadLine($File, $LineNumber)
-    If @error = -1 Then ExitLoop
-    $Line1 = Stringlen($Line)
-    $Line2 = $line1 - 6
-    $Line3 = StringRight($Line, $line2)
-    _GUICtrlComboAddString($Username, $line3)
-    $LineNumber = $lineNumber + 1
-WEnd
+    GUICtrlCreateTabItem("Generate Yaml")
+    GUICtrlCreateLabel("label0", 30, 80, 50, 20)
+    GUICtrlCreateButton("OK0", 20, 50, 50, 20)
+    GUICtrlCreateInput("default", 80, 50, 70, 20)
 
-While 1
-    $msg = GUIGetMsg()
-    Select
-        Case $msg = $GUI_EVENT_CLOSE
-            ExitLoop
-        Case $msg = $GetPassword
-            $UName = StringUpper(GUICtrlRead($Username))
-            For $i = 0 To $NumberOfLines Step 1
-            $line = FileReadLine($file, $i)
-            If @error = -1 Then ExitLoop
-            $UsernameAndPassword = StringRegExp($line, $Uname, 0)
-                If @extended = 1 then
-                    $Password = StringLeft($line, 6)
-                    MsgBox(0, "Password Is", "The password for "&GUICtrlRead($Username)&" is: " &$Password)
-                EndIF
-            Next
-        Case $msg = $Username
-            MsgBox(0, "test", "case 4 was called")
-        Case Else
-            _GUICtrlComboAutoComplete ($USername, $old_string)
-    EndSelect
-WEnd
+    GUICtrlCreateTabItem("Format")
+    GUICtrlCreateLabel("label1", 30, 80, 50, 20)
+    GUICtrlCreateCombo("", 20, 50, 60, 120)
+    GUICtrlSetData(-1, "Trids|CyberSlug|Larry|Jon|Tylo|guinness", "Jon") ; default Jon
+    GUICtrlCreateButton("OK1", 80, 50, 50, 20)
+
+    GUICtrlCreateTabItem("tab2")
+    GUICtrlSetState(-1, $GUI_SHOW) ; will be display first
+    GUICtrlCreateLabel("label2", 30, 80, 50, 20)
+    GUICtrlCreateButton("OK2", 140, 50, 50)
+
+    GUICtrlCreateTabItem("") ; end tabitem definition
+
+    GUICtrlCreateLabel("label3", 20, 130, 50, 20)
+
+    GUISetState(@SW_SHOW)
+
+    Local $idMsg
+    ; Loop until the user exits.
+    While 1
+        $idMsg = GUIGetMsg()
+
+        If $idMsg = $GUI_EVENT_CLOSE Then ExitLoop
+    WEnd
+EndFunc   ;==>Example

@@ -54,58 +54,70 @@ $object = json_decode($data)
 #EndRegion
 
 #Region APP GUI
-;GUI
-Global $hGUI = GUICreate("Juniper Tool - Phiên Ngô", 600, 600)
-Local $closeBtn = GUICtrlCreateButton("Exit", 510, 560, 80, 30)
-Local $helpBtn = GUICtrlCreateButton("About", 420, 560, 80, 30)
-Local $lblPythonVersionValue = GUICtrlCreateLabel("", 10, 570, 100,30)
-Local $lblUserName = GUICtrlCreateLabel("", 200, 570, 200,30)
-GUICtrlSetColor ($lblUserName, $COLOR_RED )
-Local $inputFile = GUICtrlCreateInput("Path of yaml file",10, 10, 490)
-Local $browseFileBtn = GUICtrlCreateButton("Browse file", 510, 10, 80, 30)
+Global $hGUI = GUICreate("Juniper Tool - Phiên Ngô", 600, 520)
+GUICtrlCreateTab(0, 0, 603, 410)
 
-GUICtrlCreateGroup("Actions", 10, 50, 580, 70)
-Local $formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 75, 180, 30)
-GUICtrlSetImage($formatFileBtn,"format.ico",221,0)
-
-GUICtrlCreateGroup("Gererate testcase", 10, 150, 580, 340)
-Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 450, 130)
+#Region Tab Generate Yaml
+GUICtrlCreateTabItem("Yaml")
+GUICtrlCreateGroup("", 10, 50, 580, 80)
+Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 450, 30)
 GUICtrlSetState($openOutputWhenDone, $GUI_CHECKED)
-GUICtrlCreateLabel("Testcase file", 20, 170, 200)
-Local $cmbFileName = GUICtrlCreateCombo("", 130, 170, 300)
-GUICtrlCreateLabel("(*)", 440, 170)
+GUICtrlCreateLabel("Testcase file", 20, 70, 200)
+Local $cmbFileName = GUICtrlCreateCombo("", 130, 70, 300)
+GUICtrlCreateLabel("(*)", 440, 70)
 GUICtrlSetColor (-1, $COLOR_RED )
 Local $testcase_FileName =json_get($object,'[testcase_filename]')
 GUICtrlSetData($cmbFileName, $testcase_FileName, "routing_interfaces.yaml")
-GUICtrlCreateLabel("Name of testcase", 20, 200, 200)
-Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 200,300)
-GUICtrlCreateLabel("(*)", 440, 200)
+GUICtrlCreateLabel("Name of testcase", 20, 100, 200)
+Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 100,300)
+GUICtrlCreateLabel("(*)", 440, 100)
 GUICtrlSetColor (-1, $COLOR_RED )
 
-Local $idComboBox = GUICtrlCreateCombo("", 20, 230,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+Local $idComboBox = GUICtrlCreateCombo("", 10, 140,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
 Local $stepsWithoutKeyword=json_get($object,'[step_without_keyword]')
 Local $stepsWithKeyword=json_get($object,'[step_with_keyword]')
 GUICtrlSetData($idComboBox, $stepsWithoutKeyword & "|" &  $stepsWithKeyword)
-Local $txtKeyword = GUICtrlCreateInput("Name of step", 230, 230,200)
-Local $addStepBtn = GUICtrlCreateButton("Add", 440, 230,60,60)
+Local $txtKeyword = GUICtrlCreateInput("Name of step", 220, 140,230)
+Local $addStepBtn = GUICtrlCreateButton("Add", 460, 140,60,60)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
-Local $deleteStepBtn = GUICtrlCreateButton("Delete", 510, 230,60,60)
+Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 140,60,60)
 GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
-Local $downBtn = GUICtrlCreateButton("Down", 440, 300,60,60)
-Local $upBtn = GUICtrlCreateButton("Up", 510, 300,60,60)
+Local $downBtn = GUICtrlCreateButton("Down", 460, 210,60,60)
+Local $upBtn = GUICtrlCreateButton("Up", 530, 210,60,60)
 GUICtrlSetState($downBtn, $GUI_DISABLE)
 GUICtrlSetState($upBtn, $GUI_DISABLE)
-Local $stepList = GUICtrlCreateListView("", 20, 260, 410, 220)
+Local $stepList = GUICtrlCreateListView("", 10, 170, 440, 220)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
 _GUICtrlListView_InsertColumn($stepList, 1, "Keyword", 150)
-_GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 200)
+_GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 220)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
-Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 440, 370, 130, 110)
+; Set default add_timestamp
+GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp| ", $stepList)
+Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 460, 280, 130, 110)
 GUICtrlSetImage($generateStepBtn, "generate.ico",221,0)
+#EndRegion
 
-GUICtrlCreateGroup("Output path", 10, 500, 580, 50)
-Local $outputHyperlink = GUICtrlCreateInput("", 20, 520, 550, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
+#Region Tab Format Yaml
+GUICtrlCreateTabItem("Format")
+Local $inputFile = GUICtrlCreateInput("Path of yaml file",10, 40, 480,30)
+Local $browseFileBtn = GUICtrlCreateButton("Browse file", 500, 40, 90, 30)
+
+GUICtrlCreateGroup("Actions", 10, 80, 580, 70)
+Local $formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 105, 180, 30)
+GUICtrlSetImage($formatFileBtn,"format.ico",221,0)
+#EndRegion
+
+GUICtrlCreateTabItem("") ; end tabitem definition
+
+Local $closeBtn = GUICtrlCreateButton("Exit", 510, 480, 80, 30)
+Local $helpBtn = GUICtrlCreateButton("About", 420, 480, 80, 30)
+Local $lblPythonVersionValue = GUICtrlCreateLabel("", 10, 490, 100,30)
+Local $lblUserName = GUICtrlCreateLabel("", 200, 490, 200,30)
+GUICtrlSetColor ($lblUserName, $COLOR_RED )
+
+GUICtrlCreateGroup("Output path", 10, 420, 580, 50)
+Local $outputHyperlink = GUICtrlCreateInput("", 20, 440, 550, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
 
 
 Local $PYTHON_FULLTEXT_VERSION =''
