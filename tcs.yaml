@@ -29,6 +29,9 @@ Granular_tests:
                          create_dictionary_and_check:
                              keyword_operator: #--> need to update
                              keyword_value: # --> need to update
+                             loop_over_list:
+                                 - instance_interface_list # --> need to update
+                                 - instance_name_list # --> need to update
                              checks:
                                        - check_keyword_1 # --> need to update
                                        - check_keyword_2 # --> need to update
@@ -39,6 +42,8 @@ Granular_tests:
                  1:
                      step_name:
                          create_dictionary_and_get:
+                             loop_over_list:
+                                 - lag_interfaces_list # --> need to update
                              checks:
                                        - check_keyword_1 # --> need to update
                                        - check_keyword_2 # --> need to update
@@ -72,3 +77,114 @@ Granular_tests:
                                        commit'
                          unique_id: 1
                  #####
+                 #verify_ping_successful
+                 1:
+                     verify_ping_successful:
+                         run_keyword:
+                             keyword: 'Check Ping Connection    device=${device_handle}    destination=${ip_destination}    source=${ip_source}'
+                         unique_id: 1
+                 #####
+                #get_device_ip
+                 1:
+                     get_device_ip:
+                         run_keyword:
+                             keyword: "${device_ip}=    Set Variable    ${tv['${device}__${controller}__mgt-ip']}"
+                         unique_id: 1
+                #####
+                #get_junos_version_of_host
+                 1:
+                     get_junos_version_of_host:
+                         create_dictionary_and_get:
+                             checks:
+                                       - show_version
+                                       - junos_version
+                             return_variable_name: junos_version
+                             devices: device
+                         unique_id: 1
+                #####
+                #execute_ssh_on_shell_server
+                 1:
+                     execute_ssh_on_shell_server:
+                         run_keyword:
+                             keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
+                         unique_id: 1
+                #####
+                #timeout
+                 1: timeout
+                     step_name:
+                         run_keyword:
+                             keyword: 'Sleep    ${sleep_time}'
+                         unique_id: 1
+                #####
+                #clear_log_messages
+                 1:
+                     clear_log_messages:
+                         run_event:
+                             keyword: On CLI
+                             device: device
+                             command: 'clear log messages'
+                         unique_id: 1
+                #####
+                #get_controller_name
+                 1:
+                     get_controller_name:
+                         run_keyword:
+                             keyword: '${controller}=    Get Current Controller Name    ${dh}'
+                         unique_id: 1
+                #####
+                #get_hostname
+                 1:
+                     get_hostname:
+                         run_keyword:
+                             keyword: "${hostname}=    Set Variable    ${tv['${device}__${controller}__hostname']}"
+                         unique_id: 1
+                #####
+                #get_device_username
+                 1:
+                     get_device_username:
+                         run_keyword:
+                             keyword: "${device_username}=    Set Variable    ${tv['${device}__${controller}__user']}"
+                         unique_id: 1
+                #####
+                #get_mac_address_of_server
+                 1:
+                     get_mac_address_of_server:
+                         run_keyword:    
+                             keyword: '${mac_of_server}    Get Server Mac Address   ifconfig_op=${response}'
+                         unique_id: 1
+                #####
+                #connect_shell_to_execute_server
+                 1:
+                     connect_shell_to_execute_server:
+                         run_keyword:
+                             keyword: '${server-handle}    Connect To Device    host=${server_ip}    os=linux    connect_mode=${ssh_mode}    user=${server_user}    password=${server_password}'
+                         unique_id: 60075
+                #####
+                #execute_tcp_dump_command_on_server
+                 1:
+                     execute_tcp_dump_command_on_server:
+                         run_keyword:
+                             keyword: '${tcp_pid}    Start Tcpdump    device=${dh}    pcapfile=firewall_log.pcap    interface=${intf_name}    port=514'
+                         unique_id: 1
+                #####
+                #stop_tcpdump_process
+                 1:
+                     stop_tcpdump_process:
+                         run_keyword:
+                             keyword: 'Stop Tcpdump    device=${dh}    pid=${tcp_pid}'
+                         unique_id: 1
+                #####
+                #run_ping
+                 1:
+                     run_ping:
+                         run_keyword:
+                             keyword: 'Execute Shell Command On Device    ${dh}    command=ping -c 5 ${ipv6_destination} >pingtest.txt    timeout=${60}'
+                         unique_id: 1
+                #####
+                #reboot_device
+                 1:
+                     reboot_device:
+                         run_keyword:
+                             keyword: '${status}   Reboot device    ${dh}   mode=cli   wait=180  all=True'
+                         unique_id: 1
+                #####

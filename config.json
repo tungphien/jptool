@@ -1,6 +1,6 @@
 {
-  "step_without_keyword":"add_timestamp|get_handle|revert_config",
-  "step_with_keyword":"create_dictionary_and_check|create_dictionary_and_get|run_event|run_keyword",
+  "step_without_keyword":"add_timestamp|get_handle|revert_config|verify_ping_successful|get_device_ip|get_junos_version_of_host|execute_ssh_on_shell_server|clear_log_messages|get_controller_name|get_hostname|get_device_username|get_mac_address_of_server|connect_shell_to_execute_server|execute_tcp_dump_command_on_server|stop_tcpdump_process|run_ping|reboot_device",
+  "step_with_keyword":"create_dictionary_and_check|create_dictionary_and_get|run_event|run_keyword|timeout",
   "testcase_filename":"routing_interfaces.yaml|routing_mpls.yaml|routing_platform.yaml|routing_protocols.yaml|dc_ethernet_switching.yaml|dc_interfaces.yaml|dc_management.yaml|dc_protocols.yaml|dc_security.yaml|dc_virtualchassis.yaml|platform_fusion.yaml|security_interface.yaml|platform.yaml|security_platform.yaml|security_ipsec.yaml|security_firewall.yaml",
   "users":"nhuu|dnguyenvan|tnguyenngoc|hphantrung"
 }

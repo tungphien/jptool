@@ -82,10 +82,10 @@ Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 200,300)
 GUICtrlCreateLabel("(*)", 440, 200)
 GUICtrlSetColor (-1, $COLOR_RED )
 
-Local $idComboBox = GUICtrlCreateCombo("Select", 20, 230,200)
+Local $idComboBox = GUICtrlCreateCombo("", 20, 230,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
 Local $stepsWithoutKeyword=json_get($object,'[step_without_keyword]')
 Local $stepsWithKeyword=json_get($object,'[step_with_keyword]')
-GUICtrlSetData($idComboBox, $stepsWithoutKeyword & "|" &  $stepsWithKeyword, "Select")
+GUICtrlSetData($idComboBox, $stepsWithoutKeyword & "|" &  $stepsWithKeyword)
 Local $txtKeyword = GUICtrlCreateInput("Name of step", 230, 230,200)
 Local $addStepBtn = GUICtrlCreateButton("Add", 440, 230,60,60)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
@@ -244,7 +244,7 @@ Func addStep()
 	  updateIndexNumber()
    Else
 	  If $txtValue='' Or StringInStr($txtValue,' ') Then
-		 MsgBox($MB_ICONERROR, "", "Invalid name of keyword !")
+		 MsgBox($MB_ICONERROR, "", "Invalid name of step !")
 	  Else
 		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "|" & $txtValue, $stepList)
 	  EndIf
