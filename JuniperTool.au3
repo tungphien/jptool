@@ -14,14 +14,17 @@
 
 Opt("GUIOnEventMode", 1);
 #Region Loading
-ProgressOn("Load Juniper Tool", "Openning Program", "0%"); Just to let more beautiful
-For $i = 10 To 100 Step 10
-    Sleep(100)
-    ProgressSet($i, $i & "%")
-Next
-ProgressSet(100, "Full Load", "Complete")
-Sleep(500)
-ProgressOff()
+loadindProgess(500,"Load Juniper Tool","Openning Program")
+Func loadindProgess($timeout, $title, $msg)
+   ProgressOn($title, $msg, "0%"); Just to let more beautiful
+   For $i = 10 To 100 Step 10
+	   Sleep(100)
+	   ProgressSet($i, $i & "%")
+   Next
+   ProgressSet(100, "Complete", "Complete")
+   Sleep($timeout)
+   ProgressOff()
+EndFunc
 #EndRegion
 
 #Region Login GUI
@@ -116,6 +119,7 @@ Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
 #EndRegion
 GUICtrlSetOnEvent($closeBtn, "_Close")
+GUICtrlSetOnEvent($helpBtn, "displayHelp")
 GUICtrlSetOnEvent($browseFileBtn, "displayBrowseFile")
 GUICtrlSetOnEvent($formatFileBtn, "doFormat")
 GUICtrlSetOnEvent($generateStepBtn, "doGenerateSteps")
@@ -296,7 +300,7 @@ Func doGenerateSteps()
 	  $cmd =$PYTHON_CMD &' main.py -s "' & $strSteps &'" -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
 	  ConsoleWrite($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-	  ;MsgBox($MB_ICONINFORMATION, "", "The formatted file: output/test_case_generate.yaml")
+	  loadindProgess(500,"Generate testcase","Processing...")
 	  $filePath = @ScriptDir & '\output\'& $fileOfTestcase
 	  GUICtrlSetData($outputHyperlink, $filePath)
 	  OpenFile($filePath)
@@ -308,14 +312,12 @@ Func doFormat()
 	if FileExists($filePath)==0 Then
 	   MsgBox($MB_ICONERROR, "", "File not found !")
 	Else
-	   $answer = MsgBox($MB_YESNO, "Confirm", "Do you want to FORMAT and RE-INDEX UNIQUE this file? " & @CRLF & $filePath)
+	   $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Do you want to FORMAT and RE-INDEX UNIQUE this file? " & @CRLF & $filePath)
 	   If  $answer = 6 Then ;If select OK
 		   Local $iPID = Run(@ComSpec & " /c " & $PYTHON_CMD &' main.py -f "' & $filePath &'"', "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-		   Local $aArray = _PathSplit($filePath, "", "", "", "")
-		   Local $newPath= StringReplace ( $filePath, ".yaml", $filePath&"_temp.yaml")
-		   ;MsgBox($MB_ICONINFORMATION, "", "The formatted file: " & @CRLF & $newPath)
-		   GUICtrlSetData($outputHyperlink, $newPath)
-		   OpenFile($newPath)
+		   loadindProgess(500,"Format yaml file","Processing...")
+		   GUICtrlSetData($outputHyperlink, $filePath)
+		   OpenFile($filePath)
 	   EndIf
 	EndIf
 
@@ -368,12 +370,16 @@ EndFunc   ;==>_IsChecked
 
 Func OpenFile($file_path)
    If _IsChecked($openOutputWhenDone) Then
-	  Sleep(500)
-	  $notepad_path = 'C:\Program Files (x86)\Notepad++\notepad++.exe'
-	  if FileExists($notepad_path)==0 Then
-		 $notepad_path = 'notepad.exe'
+	  $editor = 'notepad.exe'
+	  $notepad_path_32 = 'C:\Program Files (x86)\Notepad++\notepad++.exe'
+	  $notepad_path_64 = 'C:\Program Files\Notepad++\notepad++.exe'
+	  if FileExists($notepad_path_32)==1 Then
+		 $editor = $notepad_path_32
 	  EndIf
-	  Run($notepad_path & " " & $file_path)
+	  if FileExists($notepad_path_64)==1 Then
+		 $editor = $notepad_path_64
+	  EndIf
+	  Run($editor & " " & $file_path)
    EndIf
 EndFunc
 Func getOutputOfProcess($iPID)
@@ -395,7 +401,7 @@ Func getOutputOfProcess($iPID)
    Return $output
 EndFunc
 Func displayHelp()
-   MsgBox(0, "About Jtool!", "Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique."& @CRLF &"- Generate common steps for testcase.")
+   MsgBox(0, "About Jtool!", "Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
 EndFunc
 Func _Close()
 	Exit(0)
