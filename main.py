@@ -14,9 +14,9 @@ def detectCommentLine(yaml_content, format_structure):
       space_of_next_line = match.end(2) - match.start(2)
       next_line = match.group(3)
       if next_line in format_structure:
-        format_structure[comment_line.strip()] = {'line':None, 'indent':format_structure[next_line]['indent']}
+        format_structure[comment_line.strip()] = {'line': None, 'indent': format_structure[next_line]['indent']}
       else:
-        format_structure[comment_line.strip()] = {'line':None, 'indent':space_of_next_line}
+        format_structure[comment_line.strip()] = {'line': None, 'indent': space_of_next_line}
 
   return format_structure
 
@@ -24,20 +24,20 @@ def detectCommentLine(yaml_content, format_structure):
 def detectChecksOption(yaml_content, format_structure):
   checks_options = re.findall('(- .*)\n', yaml_content)
   for item in checks_options:
-    format_structure[item.strip()] = {'line':None, 'indent':39}
+    format_structure[item.strip()] = {'line': None, 'indent': 39}
   return format_structure
 
 
 def detect_common_variables(yaml_content, format_structure):
   found = False
-  i=0
+  i = 0
   for line in yaml_content.split('\n'):
-    i=i+1
+    i = i + 1
     if "common_variables" in line:
       found = True
       continue
     if found and "steps" not in line:
-      format_structure[line.strip()] = {'line':i, 'indent':17}
+      format_structure[line.strip()] = {'line': i, 'indent': 17}
     if "steps" in line:
       found = False
       continue
@@ -49,25 +49,25 @@ def detect_file(yaml_content, format_structure):
   # detect testcase name
   testcase_name_list = re.findall('[\s]{0,}(.*)\n.*common_variables:', yaml_content)
   for item in testcase_name_list:
-    format_structure[item.strip()] = {'line':None, 'indent':4}
+    format_structure[item.strip()] = {'line': None, 'indent': 4}
   # detect all common variables
   format_structure = detect_common_variables(yaml_content, format_structure)
   # detect index step
   index_step_list = re.findall('\n[\s]{0,}(\d+:)\n', yaml_content)
   for item in index_step_list:
-    format_structure[item.strip()] = {'line':None, 'indent':17}
+    format_structure[item.strip()] = {'line': None, 'indent': 17}
   # detect stepname
   index_stepname_list = re.findall('\n[\s]{0,}\d+:[\s]{0,}(.*)\n', yaml_content)
   for item in index_stepname_list:
-    format_structure[item.strip()] = {'line':None, 'indent':21}
+    format_structure[item.strip()] = {'line': None, 'indent': 21}
   # detect sub step has operator
   index_substep_operator_list = re.findall('(.*_operator:.*\n)', yaml_content)
   for item in index_substep_operator_list:
-    format_structure[item.strip()] = {'line':None, 'indent':29}
+    format_structure[item.strip()] = {'line': None, 'indent': 29}
   # detect sub step has value
   index_substep_value_list = re.findall('(.*_value:.*\n)', yaml_content)
   for item in index_substep_value_list:
-    format_structure[item.strip()] = {'line':None, 'indent':29}
+    format_structure[item.strip()] = {'line': None, 'indent': 29}
   # detect checks options
   format_structure = detectChecksOption(yaml_content, format_structure)
   # detect comment line
@@ -77,25 +77,25 @@ def detect_file(yaml_content, format_structure):
 
 def update_unique_ids_and_format(yaml_file=None, uid=1):
   format_structure = {
-    "Granular_tests:": {'line':None, 'indent':0},
-    "common_variables:": {'line':None, 'indent':8},
-    "steps:": {'line':None, 'indent':8},
-    "create_dictionary_and_check:": {'line':None, 'indent':25},
-    "unique_id:": {'line':None, 'indent':25},
-    "create_dictionary_and_get:": {'line':None, 'indent':25},
-    "run_event:": {'line':None, 'indent':25},
-    "clear_traffic_stats:": {'line':None, 'indent':25},
-    "check_traffic_and_get_convergence:": {'line':None, 'indent':25},
-    "clear_and_check_traffic_stats:": {'line':None, 'indent':25},
-    "confirm_traffic_drops:": {'line':None, 'indent':25},
-    "run_keyword:": {'line':None, 'indent':25},
-    "devices: device": {'line':None, 'indent':29},
-    "keyword:": {'line':None, 'indent':29},
-    "checks:": {'line':None, 'indent':29},
-    "positional_args_list:": {'line':None, 'indent':29},
-    "return_variable_name:": {'line':None, 'indent':29},
-    "return_status:": {'line':None, 'indent':29},
-    "loop_over_list:": {'line':None, 'indent':29}
+    "Granular_tests:": {'line': None, 'indent': 0},
+    "common_variables:": {'line': None, 'indent': 8},
+    "steps:": {'line': None, 'indent': 8},
+    "create_dictionary_and_check:": {'line': None, 'indent': 25},
+    "unique_id:": {'line': None, 'indent': 25},
+    "create_dictionary_and_get:": {'line': None, 'indent': 25},
+    "run_event:": {'line': None, 'indent': 25},
+    "clear_traffic_stats:": {'line': None, 'indent': 25},
+    "check_traffic_and_get_convergence:": {'line': None, 'indent': 25},
+    "clear_and_check_traffic_stats:": {'line': None, 'indent': 25},
+    "confirm_traffic_drops:": {'line': None, 'indent': 25},
+    "run_keyword:": {'line': None, 'indent': 25},
+    "devices: device": {'line': None, 'indent': 29},
+    "keyword:": {'line': None, 'indent': 29},
+    "checks:": {'line': None, 'indent': 29},
+    "positional_args_list:": {'line': None, 'indent': 29},
+    "return_variable_name:": {'line': None, 'indent': 29},
+    "return_status:": {'line': None, 'indent': 29},
+    "loop_over_list:": {'line': None, 'indent': 29}
   }
   unique_ids_mapping = {
     'routing_interfaces.yaml': 1,
@@ -125,15 +125,16 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
   counter = int(uid)
   steps_counter = 1
   fw = open(yaml_file, 'w')
-  i=0
+  i = 0
+  contentToWrite = ''
   for line in yaml_content.split('\n'):
-    i=i+1
+    i = i + 1
     if 'steps:' in line:
       steps_counter = 1
     if 'unique_id:' in line:
       line = line.split(':')[0] + ': ' + str(counter)
       counter += 1
-      format_structure[line.strip()]={'line':None, 'indent':25}
+      format_structure[line.strip()] = {'line': None, 'indent': 25}
     if re.search('^\s*\d+\:$', line):
       spaces = 17
       line = ' ' * spaces + str(steps_counter) + ':'
@@ -147,25 +148,29 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
       else:
         if format_structure[line_content]['line'] == i:
           line = ' ' * format_structure[line_content]['indent'] + line_content
-    fw.write(line + '\n')
+    contentToWrite = contentToWrite + line + '\n'
+  fw.write(contentToWrite.strip())
   fw.close()
 
-def generateStep(stepStr, file_name, testcase_name,username):
+
+def generateStep(stepStr, file_name, testcase_name, username):
   arrStepObjs = stepStr.split('@')
-  stepsToWrite = getHeaderContent(testcase_name,username)
+  stepsToWrite = getHeaderContent(testcase_name, username)
   for stepObj in arrStepObjs:
-    if stepObj!='':
-      stepsToWrite = getStepContent({'keyword':stepObj.split('#')[0],'step_name':stepObj.split('#')[1]},stepsToWrite)
+    if stepObj != '':
+      stepsToWrite = getStepContent({'keyword': stepObj.split('#')[0], 'step_name': stepObj.split('#')[1]},
+                                    stepsToWrite)
   pth_of_file = 'output/test_case_generate.yaml'
   if file_name is not None:
-    pth_of_file='output/'+file_name
+    pth_of_file = 'output/' + file_name
   fw = open(pth_of_file, 'w')
-  fw.write(stepsToWrite)
+  fw.write(stepsToWrite.strip())
   fw.close()
   update_unique_ids_and_format(pth_of_file)
 
-def getHeaderContent(testcase_name,username):
-  result =''
+
+def getHeaderContent(testcase_name, username):
+  result = ''
   yaml_file = 'tcs.yaml'
   with open(yaml_file, 'r') as fr:
     yaml_content = fr.read()
@@ -175,13 +180,14 @@ def getHeaderContent(testcase_name,username):
     if line.strip() == 'steps:':
       write_code_before_step = False
       result = result + line + '\n'
-    if write_code_before_step==True:
+    if write_code_before_step == True:
       if testcase_name is not None:
-        line=line.replace('testcase_name',testcase_name)
+        line = line.replace('testcase_name', testcase_name)
       if username is not None:
         line = line.replace('owner_name', username)
       result = result + line + '\n'
   return result
+
 
 def getStepContent(stepObj, result):
   yaml_file = 'tcs.yaml'
@@ -190,17 +196,18 @@ def getStepContent(stepObj, result):
 
   found = False
   for line in yaml_content.split('\n'):
-      # detect step to write
-      if line.replace('#','',1).strip() == stepObj['keyword']:
-        found = True
-        continue
-      if found and '#####' not in line:
-        line = line.replace('step_name',stepObj['step_name'])
-        result = result + line + '\n'
-      if "#####" in line:
-        found = False
-        continue
+    # detect step to write
+    if line.replace('#', '', 1).strip() == stepObj['keyword']:
+      found = True
+      continue
+    if found and '#####' not in line:
+      line = line.replace('step_name', stepObj['step_name'])
+      result = result + line + '\n'
+    if "#####" in line:
+      found = False
+      continue
   return result
+
 
 def main():
   argparser = ArgumentParser('python main.py -yaml=<yaml_file>')
@@ -213,7 +220,7 @@ def main():
   args = argparser.parse_args()
   yaml_file = args.yaml_file
   start_unique_id = args.unique_id
-  stepStr= args.step
+  stepStr = args.step
   testcase_name = args.testcase_name
   file_name = args.file_name
   username = args.username
