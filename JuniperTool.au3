@@ -60,21 +60,19 @@ GUICtrlCreateTab(0, 0, 603, 410)
 
 #Region Tab Generate Yaml
 GUICtrlCreateTabItem("Yaml")
-GUICtrlCreateGroup("", 10, 50, 580, 80)
-Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 450, 30)
-GUICtrlSetState($openOutputWhenDone, $GUI_CHECKED)
-GUICtrlCreateLabel("Testcase file", 20, 70, 200)
-Local $cmbFileName = GUICtrlCreateCombo("", 130, 70, 300)
-GUICtrlCreateLabel("(*)", 440, 70)
+GUICtrlCreateGroup("", 10, 20, 580, 80)
+GUICtrlCreateLabel("Testcase file", 20, 40, 200)
+Local $cmbFileName = GUICtrlCreateCombo("", 130, 40, 300)
+GUICtrlCreateLabel("(*)", 440, 40)
 GUICtrlSetColor (-1, $COLOR_RED )
 Local $testcase_FileName =json_get($object,'[testcase_filename]')
 GUICtrlSetData($cmbFileName, $testcase_FileName, "routing_interfaces.yaml")
-GUICtrlCreateLabel("Name of testcase", 20, 100, 200)
-Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 100,300)
-GUICtrlCreateLabel("(*)", 440, 100)
+GUICtrlCreateLabel("Name of testcase", 20, 70, 200)
+Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 70,300)
+GUICtrlCreateLabel("(*)", 440, 70)
 GUICtrlSetColor (-1, $COLOR_RED )
 
-Local $idComboBox = GUICtrlCreateCombo("", 10, 140,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+Local $idComboBox = GUICtrlCreateCombo("", 10, 110,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
 ;Local $stepsWithoutKeyword=json_get($object,'[step_without_keyword]')
 #Region Read tsc.yaml
 Local $aInput
@@ -99,37 +97,45 @@ EndFunc
 #EndRegion
 ;Local $stepsWithKeyword=json_get($object,'[step_with_keyword]')
 GUICtrlSetData($idComboBox, $common_step)
-Local $txtKeyword = GUICtrlCreateInput("Name of step", 220, 140,230)
-Local $addStepBtn = GUICtrlCreateButton("Add", 460, 140,60,60)
+Local $cmbAgniKeyword = GUICtrlCreateCombo("", 220, 110, 230,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
+Local $txtKeyword = GUICtrlCreateInput("Name of step", 10, 140, 440)
+Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,60,60)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
-Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 140,60,60)
+Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 110,60,60)
 GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
-Local $downBtn = GUICtrlCreateButton("Down", 460, 210,60,60)
-Local $upBtn = GUICtrlCreateButton("Up", 530, 210,60,60)
+Local $downBtn = GUICtrlCreateButton("Down", 460, 180,60,60)
+Local $upBtn = GUICtrlCreateButton("Up", 530, 180,60,60)
 GUICtrlSetState($downBtn, $GUI_DISABLE)
 GUICtrlSetState($upBtn, $GUI_DISABLE)
 Local $stepList = GUICtrlCreateListView("", 10, 170, 440, 220)
 ; Add columns
-_GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
+_GUICtrlListView_InsertColumn($stepList, 0, "#", 25)
 _GUICtrlListView_InsertColumn($stepList, 1, "Function of step", 150)
-_GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 220)
+_GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 150)
+_GUICtrlListView_InsertColumn($stepList, 3, "Keyword", 80)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
 ; Set default add_timestamp
 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
-Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 460, 280, 130, 110)
+Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 460, 250, 130, 140)
 GUICtrlSetImage($generateStepBtn, "generate.ico",221,0)
 #EndRegion
 
 #Region Tab Format Yaml
 GUICtrlCreateTabItem("Format")
-Local $inputFile = GUICtrlCreateInput("Path of yaml file",10, 40, 480,30)
-Local $browseFileBtn = GUICtrlCreateButton("Browse file", 500, 40, 90, 30)
+Local $inputFile = GUICtrlCreateInput("Path of yaml file",10, 40, 480,21)
+Local $browseFileBtn = GUICtrlCreateButton("Browse file", 500, 40, 90, 21)
 
 GUICtrlCreateGroup("Actions", 10, 80, 580, 70)
 Local $formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 105, 180, 30)
 GUICtrlSetImage($formatFileBtn,"format.ico",221,0)
 #EndRegion
+GUICtrlCreateTabItem("Setting")
 
+#Region Tab Setting
+Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 10, 30)
+GUICtrlSetState($openOutputWhenDone, $GUI_CHECKED)
+#EndRegion
 GUICtrlCreateTabItem("") ; end tabitem definition
 
 Local $closeBtn = GUICtrlCreateButton("Exit", 510, 480, 80, 30)
@@ -273,10 +279,11 @@ EndFunc
 Func addStep()
    $comboValue = GUICtrlRead($idComboBox)
    $txtValue = GUICtrlRead($txtKeyword)
+   $agniKeywordValue = GUICtrlRead($cmbAgniKeyword)
    If $txtValue='' Or StringInStr($txtValue,' ') Then
 	  MsgBox($MB_ICONERROR, "", "Invalid name of step !")
    Else
-	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "|" & $txtValue, $stepList)
+	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "|" & $txtValue&"|"&$agniKeywordValue, $stepList)
    EndIf
    updateIndexNumber()
 EndFunc
@@ -291,8 +298,32 @@ Func changeComboStep()
 	  GUICtrlSetState($addStepBtn, $GUI_DISABLE)
    Else
 	  GUICtrlSetState($addStepBtn, $GUI_ENABLE)
+	  bindingDataToAgniKeywordCombobox()
+	  $value = $comboValue
+	  If $comboValue=='run_event' Or $comboValue=='run_keyword' Or $comboValue=='create_dictionary_and_get' Or $comboValue=='create_dictionary_and_check'Then
+		 $value = $comboValue & '_'
+	  EndIf
+	  GUICtrlSetData($txtKeyword, $value)
    EndIf
-   GUICtrlSetData($txtKeyword,$comboValue)
+EndFunc
+
+Func bindingDataToAgniKeywordCombobox()
+   $comboValue = GUICtrlRead($idComboBox)
+   If $comboValue=='run_event' Or $comboValue=='run_keyword' Then
+	  GUICtrlSetState($cmbAgniKeyword, $GUI_ENABLE)
+	  If $comboValue=='run_event' Then
+		 GUICtrlSetData($cmbAgniKeyword, '')
+		 GUICtrlSetData($cmbAgniKeyword, 'On CLI|On Config')
+	  EndIf
+	  If $comboValue=='run_keyword' Then
+		 ; get all keyword from agni
+		 GUICtrlSetData($cmbAgniKeyword, '')
+		 GUICtrlSetData($cmbAgniKeyword, 'Should Contain|Should be equal')
+	  EndIf
+   Else
+	  GUICtrlSetData($cmbAgniKeyword, '')
+	  GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
+   EndIf
 EndFunc
 #EndRegion
 

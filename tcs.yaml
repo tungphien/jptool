@@ -55,14 +55,14 @@ Granular_tests:
                  1:
                      step_name:
                          run_keyword:
-                             keyword: # --> need to update 
+                             keyword: <<keyword>>
                          unique_id: 1
                  #####
                  #run_event@
                  1:
                      step_name:
-                         run_event: # --> need to update: On CLI or On Config
-                             keyword: # --> need to update 
+                         run_event: 
+                             keyword: <<keyword>>
                              device: device
                              command: # --> need to update 
                          unique_id: 1
