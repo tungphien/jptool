@@ -135,6 +135,9 @@ GUICtrlCreateTabItem("Setting")
 #Region Tab Setting
 Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 10, 30)
 GUICtrlSetState($openOutputWhenDone, $GUI_CHECKED)
+Local $inputAgniPath = GUICtrlCreateInput("",10, 60, 480,21)
+GUICtrlSetData($inputAgniPath, json_get($object,'[agni_path]'))
+Local $browseAgniPathBtn = GUICtrlCreateButton("Browse folder", 500, 60, 90, 21)
 #EndRegion
 GUICtrlCreateTabItem("") ; end tabitem definition
 
@@ -161,6 +164,7 @@ GUISetAccelerators($AccelKeys)
 GUICtrlSetOnEvent($closeBtn, "_Close")
 GUICtrlSetOnEvent($helpBtn, "displayHelp")
 GUICtrlSetOnEvent($browseFileBtn, "displayBrowseFile")
+GUICtrlSetOnEvent($browseAgniPathBtn, "displayBrowseFolder")
 GUICtrlSetOnEvent($formatFileBtn, "doFormat")
 GUICtrlSetOnEvent($generateStepBtn, "doGenerateSteps")
 GUICtrlSetOnEvent($addStepBtn, "addStep")
@@ -300,7 +304,7 @@ Func changeComboStep()
 	  GUICtrlSetState($addStepBtn, $GUI_ENABLE)
 	  bindingDataToAgniKeywordCombobox()
 	  $value = $comboValue
-	  If $comboValue=='run_event' Or $comboValue=='run_keyword' Or $comboValue=='create_dictionary_and_get' Or $comboValue=='create_dictionary_and_check'Then
+	  If $comboValue=='run_event' Or $comboValue=='run_keyword' Or $comboValue=='create_dictionary_and_get' Or $comboValue=='create_dictionary_and_check' Then
 		 $value = $comboValue & '_'
 	  EndIf
 	  GUICtrlSetData($txtKeyword, $value)
@@ -326,6 +330,25 @@ Func bindingDataToAgniKeywordCombobox()
    EndIf
 EndFunc
 #EndRegion
+
+Func updateAgniPath($new_agni_path)
+   Local $aInput
+   $filePath = "config.json"
+   $tempfile = 'temp.json'
+   $fileO = FileOpen($tempfile, 2)
+   _FileReadToArray($filePath, $aInput)
+   For $i = 1 to UBound($aInput) -1
+	  $content = $aInput[$i]
+	  If StringInStr($aInput[$i],'"agni_path"')>0 Then
+		 $content = StringRegExpReplace($aInput[$i], '"agni_path":.*,', '"agni_path":"'&$new_agni_path&'",')
+	  EndIf
+
+	  FileWrite($fileO, $content & @CRLF)
+   Next
+   FileClose($fileO)
+   FileDelete($filePath)
+   FileMove('temp.json', $filePath)
+EndFunc
 
 Func validateFormBeforeGenerate()
    $testcaseName = GUICtrlRead($txtTestcaseName)
@@ -403,6 +426,21 @@ Func displayBrowseFile()
 		;MsgBox($MB_SYSTEMMODAL, "", "You chose the following files:" & @CRLF & $sFileOpenDialog)
 		ControlSetText($hGUI,"",$inputFile,$sFileOpenDialog)
 	EndIf
+EndFunc
+Func displayBrowseFolder()
+    ; Create a constant variable in Local scope of the message to display in FileSelectFolder.
+    Local Const $sMessage = "Select your AGNI folder"
+
+    ; Display an open dialog to select a file.
+    Local $sFileSelectFolder = FileSelectFolder($sMessage, "")
+    If @error Then
+        ; Display the error message.
+        MsgBox($MB_SYSTEMMODAL, "", "No folder was selected.")
+    Else
+        GUICtrlSetData($inputAgniPath, $sFileSelectFolder)
+		$new_agni_path = StringRegExpReplace($sFileSelectFolder,'\\','\\\\\\\\')
+		updateAgniPath($new_agni_path)
+    EndIf
 EndFunc
 
 Func getPythonVersion()
