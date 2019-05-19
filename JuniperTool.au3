@@ -54,6 +54,12 @@ $data = FileRead("config.json")
 $object = json_decode($data)
 #EndRegion
 
+#Region Read agni keywords
+$data_agni = FileRead("agni_keywords.json")
+$object_agni = json_decode($data_agni)
+$agni_keywors = json_get($object_agni,'[keywords]')
+#EndRegion
+
 #Region APP GUI
 Global $hGUI = GUICreate("Juniper Tool - Phiên Ngô", 600, 520)
 GUICtrlCreateTab(0, 0, 603, 410)
@@ -322,7 +328,8 @@ Func bindingDataToAgniKeywordCombobox()
 	  If $comboValue=='run_keyword' Then
 		 ; get all keyword from agni
 		 GUICtrlSetData($cmbAgniKeyword, '')
-		 GUICtrlSetData($cmbAgniKeyword, 'Should Contain|Should be equal')
+		 stringJoin($agni_keywors ,'|')
+		 GUICtrlSetData($cmbAgniKeyword, stringJoin($agni_keywors ,'|'))
 	  EndIf
    Else
 	  GUICtrlSetData($cmbAgniKeyword, '')
@@ -330,6 +337,15 @@ Func bindingDataToAgniKeywordCombobox()
    EndIf
 EndFunc
 #EndRegion
+
+Func stringJoin($array, $slash)
+   $result=''
+   For $element IN $array
+       $result = $result & ''& $slash &'' & $element
+   Next
+   ConsoleWrite($result)
+   Return $result
+EndFunc
 
 Func updateAgniPath($new_agni_path)
    Local $aInput
@@ -369,11 +385,16 @@ Func doGenerateSteps()
    If Not $validateMsg='' Then
 	  MsgBox($MB_ICONERROR, "", $validateMsg)
    Else
-	  Local $arrSteps='' ;[step#kword, step1#keyword1]
+	  Local $arrSteps='' ;[function#stepname#keyword, function#stepname#keyword]
 	  For $x = 0 To _GUICtrlListView_GetItemCount($stepList) - 1
-		  $itemText = _GUICtrlListView_GetItemTextString($stepList,$x)
-		  $txtArr = StringSplit($itemText,'|')
-		  $arrSteps = $arrSteps & ' ' & $txtArr[2] & '#' & $txtArr[3]
+		 $itemText = _GUICtrlListView_GetItemTextString($stepList,$x)
+		 $txtArr = StringSplit($itemText,'|')
+		 $obj = ''
+		 $obj = $obj & $txtArr[2] & '#' & $txtArr[3]
+		 If Not $txtArr[4]='' Then
+			$obj = $obj & '#' & $txtArr[4]
+		 EndIf
+		 $arrSteps = $arrSteps & ' "' & $obj & '"'
 	  Next
 	  ConsoleWrite($arrSteps)
 	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'

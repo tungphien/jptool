@@ -3,6 +3,7 @@
 import os
 import re
 from argparse import ArgumentParser
+import json
 
 
 def detectCommentLine(yaml_content, format_structure):
@@ -162,12 +163,15 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
     fw.close()
 
 
-def generateStep(arrStepObjs, file_name, testcase_name, username):
+def generateStep(arrStepObjs, file_name, testcase_name, username, agni_keyword_data):
     stepsToWrite = getHeaderContent(testcase_name, username)
     for stepObj in arrStepObjs:
         if stepObj != '':
-            stepsToWrite = getStepContent({'keyword': stepObj.split('#')[0], 'step_name': stepObj.split('#')[1]},
-                                          stepsToWrite)
+            arrItem = stepObj.split('#')
+            data = {'function_step': arrItem[0], 'step_name': arrItem[1]}
+            if len(arrItem) >= 3:
+                data['keyword'] = arrItem[2]
+            stepsToWrite = getStepContent(data, stepsToWrite, agni_keyword_data)
     pth_of_file = 'output/test_case_generate.yaml'
     if file_name is not None:
         pth_of_file = 'output/' + file_name
@@ -197,7 +201,7 @@ def getHeaderContent(testcase_name, username):
     return result
 
 
-def getStepContent(stepObj, result):
+def getStepContent(stepObj, result, agni_keyword_data):
     yaml_file = 'tcs.yaml'
     with open(yaml_file, 'r') as fr:
         yaml_content = fr.read()
@@ -205,11 +209,16 @@ def getStepContent(stepObj, result):
     found = False
     for line in yaml_content.split('\n'):
         # detect step to write
-        if re.sub(r"#|@", "", line).strip() == stepObj['keyword']:
+        if re.sub(r"#|@", "", line).strip() == stepObj['function_step']:
             found = True
             continue
         if found and '#####' not in line:
             line = line.replace('step_name', stepObj['step_name'])
+            if 'keyword' in stepObj.keys():
+                if stepObj['keyword'] in agni_keyword_data.keys():
+                    line = line.replace('<<keyword>>', agni_keyword_data[stepObj['keyword']])
+                else:
+                    line = line.replace('<<keyword>>', stepObj['keyword'])
             result = result + line + '\n'
         if "#####" in line:
             found = False
@@ -218,6 +227,8 @@ def getStepContent(stepObj, result):
 
 
 def main():
+    with open('agni_keywords.json') as json_file:
+        agni_keyword_data = json.load(json_file)['content']
     argparser = ArgumentParser('python main.py -yaml=<yaml_file>')
     argparser.add_argument('-f', '--yaml_file', default=None, help='yaml file to update and format indent')
     argparser.add_argument('-u', '--unique_id', default=1, help='unique id to start for file')
@@ -238,7 +249,7 @@ def main():
     if yaml_file is not None and start_unique_id is not None:
         update_unique_ids_and_format(yaml_file=yaml_file, uid=start_unique_id)
     if listStep is not None:
-        generateStep(listStep, file_name, testcase_name, username)
+        generateStep(listStep, file_name, testcase_name, username, agni_keyword_data)
 
 
 if __name__ == '__main__':

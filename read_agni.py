@@ -1,7 +1,10 @@
 import glob
 import re
+import json
 
-agni_directory_path = "D:\\Startup\\agni\\"
+with open('config.json') as json_file:
+    config_data = json.load(json_file)
+agni_directory_path = config_data['agni_path'] + '/'
 
 list_file_paths = glob.glob(agni_directory_path + "*.yaml")
 
@@ -18,7 +21,7 @@ for keyword in list_keywords:
 
     if not keyword.strip().lower() == 'on config' and not keyword.strip().lower() == 'on cli':
         keyword_name = ''
-        keyword=keyword.strip()
+        keyword = keyword.strip()
         keyword_content = re.sub(r"\'", "", keyword)
         keyword_splited_arr = re.split(r'\s{4,}', keyword_content)
         if len(keyword_splited_arr) == 1:
@@ -36,5 +39,11 @@ for keyword in list_keywords:
                     keywords_without_run_event[keyword_name] = keyword_content
             else:
                 keywords_without_run_event[keyword_name] = keyword_content
+data = {
+    'keywords': keywords_without_run_event.keys(),
+    'content': keywords_without_run_event
+}
 
-print keywords_without_run_event
+with open('agni_keywords.json', 'w') as outfile:
+    json.dump(data, outfile)
+print data
