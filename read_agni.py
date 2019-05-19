@@ -23,15 +23,14 @@ for keyword in list_keywords:
         keyword_name = ''
         keyword = keyword.strip()
         keyword_content = re.sub(r"\'", "", keyword)
-        keyword_splited_arr = re.split(r'\s{4,}', keyword_content)
+        keyword_splited_arr = re.split(r'\s{2,}', keyword_content)
         if len(keyword_splited_arr) == 1:
-            keyword_name = keyword_splited_arr[0].strip()
+            keyword_name = keyword_splited_arr[0].strip().lower()
         else:
             str = re.sub(r"\$|\'|\"", "", keyword_content)
             for item in re.split(r'\s{3,}', str):
                 if not '{' in item and not '=' in item:
-                    keyword_name = item.strip()
-                    # print keyword_name
+                    keyword_name = item.strip().lower()
                     break
         if not keyword_name == '':
             if not keywords_without_run_event:
