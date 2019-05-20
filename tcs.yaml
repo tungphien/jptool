@@ -55,14 +55,14 @@ Granular_tests:
                  1:
                      step_name:
                          run_keyword:
-                             keyword: <<keyword>>
+                             keyword: '<<keyword>>'
                          unique_id: 1
                  #####
                  #run_event@
                  1:
                      step_name:
                          run_event: 
-                             keyword: <<keyword>>
+                             keyword: '<<keyword>>'
                              device: device
                              command: # --> need to update 
                          unique_id: 1

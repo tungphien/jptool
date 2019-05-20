@@ -1,35 +1,41 @@
-#include <MsgBoxConstants.au3>
+#include <GUIConstantsEx.au3>
+#include <GuiImageList.au3>
+#include <GuiListView.au3>
 
-;Test1()
-;Test2()
-Test3()
+Example()
 
-; This example demonstrates a basic replacement.  It replaces the vowels aeiou
-; with the @ character.
-Func Test1()
-    Local $sInput = "Where have all the flowers gone, long time passing?"
-    Local $sOutput = StringRegExpReplace($sInput, "[aeiou]", "@")
-    Display($sInput, $sOutput)
-EndFunc   ;==>Test1
+Func Example()
+    Local $hImage, $idListview
 
-; The following example demonstrates using back-references to change the date
-; from MM/DD/YYYY to DD.MM.YYYY
-Func Test2()
-    Local $sInput = 'some text1 12/31/2009 01:02:03 some text2' & @CRLF & _
-            'some text3 02/28/2009 11:22:33 some text4'
-    Local $sOutput = StringRegExpReplace($sInput, '(\d{2})/(\d{2})/(\d{4})', ' $2.$1.$3 ')
-    Display($sInput, $sOutput)
-EndFunc   ;==>Test2
+    ; Create GUI
+    GUICreate("ListView Add SubItem", 400, 300)
+    $idListview = GUICtrlCreateListView("", 2, 2, 394, 268, -1, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_SUBITEMIMAGES))
+    GUISetState(@SW_SHOW)
 
-; The following example demonstrates the need to double backslash
-Func Test3()
-    Local $sInput = '%CommonProgramFiles%\Microsoft Shared\'
-    Local $sOutput = StringRegExpReplace($sInput, '%([^%]*?)%', 'C:\\\\WINDOWS\\\\Some Other Folder$')
-    Display($sInput, $sOutput)
-EndFunc   ;==>Test3
+    ; Load images
+    $hImage = _GUIImageList_Create()
+    _GUIImageList_Add($hImage, _GUICtrlListView_CreateSolidBitMap(GUICtrlGetHandle($idListview), 0xFF0000, 16, 16))
+    _GUIImageList_Add($hImage, _GUICtrlListView_CreateSolidBitMap(GUICtrlGetHandle($idListview), 0x00FF00, 16, 16))
+    _GUIImageList_Add($hImage, _GUICtrlListView_CreateSolidBitMap(GUICtrlGetHandle($idListview), 0x0000FF, 16, 16))
+    _GUICtrlListView_SetImageList($idListview, $hImage, 1)
 
-Func Display($sInput, $sOutput)
-    ; Format the output.
-    Local $sMsg = StringFormat("Input:\t%s\n\nOutput:\t%s", $sInput, $sOutput)
-    MsgBox($MB_SYSTEMMODAL, "Results", $sMsg)
-EndFunc   ;==>Display
+    ; Add columns
+    _GUICtrlListView_InsertColumn($idListview, 0, "Column 1", 100)
+    _GUICtrlListView_InsertColumn($idListview, 1, "Column 2", 100)
+    _GUICtrlListView_InsertColumn($idListview, 2, "Column 3", 100)
+	_GUICtrlListView_InsertColumn($idListview, 3, "Column 4", 100)
+
+    ; Add items
+    _GUICtrlListView_AddItem($idListview, "Row 1: Col 1", 0)
+    _GUICtrlListView_AddSubItem($idListview, 0, "Row 1: Col 2", 1, 1)
+    _GUICtrlListView_AddSubItem($idListview, 0, "Row 1: Col 3", 2, 2)
+	_GUICtrlListView_AddSubItem($idListview, 0, "Row 1: Col 4", 3, 3)
+    _GUICtrlListView_AddItem($idListview, "Row 2: Col 1", 1)
+    _GUICtrlListView_AddSubItem($idListview, 1, "Row 2: Col 2", 1, 2)
+    _GUICtrlListView_AddItem($idListview, "Row 3: Col 1", 2)
+
+    ; Loop until the user exits.
+    Do
+    Until GUIGetMsg() = $GUI_EVENT_CLOSE
+    GUIDelete()
+EndFunc   ;==>Example

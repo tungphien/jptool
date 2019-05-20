@@ -44,9 +44,8 @@ GUICtrlSetOnEvent($ButtonOk, "_Login")
 Local $hEnterKey = GUICtrlCreateDummy()
 Dim $EnterKeys[1][2]=[["{ENTER}", $hEnterKey]]
 GUISetAccelerators($EnterKeys)
-#EndRegion
 GUICtrlSetOnEvent($hEnterKey, "_Login")
-
+#EndRegion
 #EndRegion
 
 #Region Read config json
@@ -58,11 +57,12 @@ $object = json_decode($data)
 $data_agni = FileRead("agni_keywords.json")
 $object_agni = json_decode($data_agni)
 $agni_keywors = json_get($object_agni,'[keywords]')
+;_ArrayDisplay($agni_keywors)
 #EndRegion
 
 #Region APP GUI
-Global $hGUI = GUICreate("Juniper Tool - Phiên Ngô", 600, 520)
-GUICtrlCreateTab(0, 0, 603, 410)
+Global $hGUI = GUICreate("Juniper Tool - Phiên Ngô", 600, 600)
+GUICtrlCreateTab(0, 0, 603, 490)
 
 #Region Tab Generate Yaml
 GUICtrlCreateTabItem("Yaml")
@@ -78,83 +78,92 @@ Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 70,300)
 GUICtrlCreateLabel("(*)", 440, 70)
 GUICtrlSetColor (-1, $COLOR_RED )
 
-Local $idComboBox = GUICtrlCreateCombo("", 10, 110,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
-;Local $stepsWithoutKeyword=json_get($object,'[step_without_keyword]')
+Local $idComboBox = GUICtrlCreateCombo("", 10, 110,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL))
 #Region Read tsc.yaml
 Local $aInput
 $file = "tcs.yaml"
 
 _FileReadToArray($file, $aInput)
 $common_step = ''
+Local $common_funtion[0]=[]
+Local $other_function[0]=[]
 For $i = 1 to UBound($aInput) -1
     $data = getRegexByGroup($aInput[$i],'#(.*)@',0)
 	if Not $data='' Then
-	  $common_step = $common_step & '|' & $data
+	  If $data='run_event' Or $data='run_keyword' Or $data='create_dictionary_and_get' Or $data='create_dictionary_and_check' Then
+		 _ArrayAdd($common_funtion,$data)
+	  Else
+		 _ArrayAdd($other_function, $data)
+	  EndIf
+	  ;$common_step = $common_step & '|' & $data
     EndIf
 Next
-Func getRegexByGroup($content, $patten, $groupIndex)
-   $result=''
-   Local $aArray = StringRegExp($content,$patten, $STR_REGEXPARRAYGLOBALMATCH)
-   For $i = 0 To UBound($aArray) - 1
-	  $result = $aArray[$i]
-   Next
-   Return $result
-EndFunc
+_ArraySort($common_funtion, 0)
+_ArraySort($other_function, 0)
+$common_step = stringJoin($common_funtion, '|') & '|' & stringJoin($other_function, '|')
 #EndRegion
-;Local $stepsWithKeyword=json_get($object,'[step_with_keyword]')
+
 GUICtrlSetData($idComboBox, $common_step)
 Local $cmbAgniKeyword = GUICtrlCreateCombo("", 220, 110, 230,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
 GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
 Local $txtKeyword = GUICtrlCreateInput("Name of step", 10, 140, 440)
-Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,60,60)
+Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,130,50)
+GUICtrlSetImage($addStepBtn,"icons\add.ico",221,0)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
-Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 110,60,60)
+Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 170,60,60)
+GUICtrlSetImage($deleteStepBtn,"icons\delete.ico",221,0)
 GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
-Local $downBtn = GUICtrlCreateButton("Down", 460, 180,60,60)
-Local $upBtn = GUICtrlCreateButton("Up", 530, 180,60,60)
+Local $downBtn = GUICtrlCreateButton("Down", 530, 310,60,60)
+GUICtrlSetImage($downBtn,"icons\down.ico",221,0)
+Local $upBtn = GUICtrlCreateButton("Up", 530, 240,60,60)
+GUICtrlSetImage($upBtn,"icons\up.ico",221,0)
 GUICtrlSetState($downBtn, $GUI_DISABLE)
 GUICtrlSetState($upBtn, $GUI_DISABLE)
-Local $stepList = GUICtrlCreateListView("", 10, 170, 440, 220)
+Local $stepList = GUICtrlCreateListView("", 10, 170, 510, 310)
 ; Add columns
-_GUICtrlListView_InsertColumn($stepList, 0, "#", 25)
+_GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
 _GUICtrlListView_InsertColumn($stepList, 1, "Function of step", 150)
 _GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 150)
-_GUICtrlListView_InsertColumn($stepList, 3, "Keyword", 80)
+_GUICtrlListView_InsertColumn($stepList, 3, "Keyword", 150)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
 ; Set default add_timestamp
 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
-Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 460, 250, 130, 140)
-GUICtrlSetImage($generateStepBtn, "generate.ico",221,0)
+Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 530, 420, 60, 60, $BS_ICON)
+GUICtrlSetImage($generateStepBtn, "icons\yaml.ico", 1)
 #EndRegion
 
 #Region Tab Format Yaml
 GUICtrlCreateTabItem("Format")
-Local $inputFile = GUICtrlCreateInput("Path of yaml file",10, 40, 480,21)
-Local $browseFileBtn = GUICtrlCreateButton("Browse file", 500, 40, 90, 21)
+Local $inputFile = GUICtrlCreateInput("Path of yaml file",10, 40, 480,30)
+Local $browseFileBtn = GUICtrlCreateButton("Browse file", 500, 40, 90, 30)
 
 GUICtrlCreateGroup("Actions", 10, 80, 580, 70)
 Local $formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 105, 180, 30)
-GUICtrlSetImage($formatFileBtn,"format.ico",221,0)
+GUICtrlSetImage($formatFileBtn,"icons\format.ico",221,0)
 #EndRegion
 GUICtrlCreateTabItem("Setting")
 
 #Region Tab Setting
 Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 10, 30)
 GUICtrlSetState($openOutputWhenDone, $GUI_CHECKED)
-Local $inputAgniPath = GUICtrlCreateInput("",10, 60, 480,21)
+Local $inputAgniPath = GUICtrlCreateInput("",10, 60, 480,30)
 GUICtrlSetData($inputAgniPath, json_get($object,'[agni_path]'))
-Local $browseAgniPathBtn = GUICtrlCreateButton("Browse folder", 500, 60, 90, 21)
+Local $browseAgniPathBtn = GUICtrlCreateButton("Browse folder", 500, 60, 90, 30)
+Local $refreshAgniKeywordBtn = GUICtrlCreateButton("Refresh Agni Keyword", 10, 100, 150, 30)
+GUICtrlSetImage($refreshAgniKeywordBtn,"icons\refresh.ico",221,0)
 #EndRegion
 GUICtrlCreateTabItem("") ; end tabitem definition
 
-Local $closeBtn = GUICtrlCreateButton("Exit", 510, 480, 80, 30)
-Local $helpBtn = GUICtrlCreateButton("About", 420, 480, 80, 30)
-Local $lblPythonVersionValue = GUICtrlCreateLabel("", 10, 490, 100,30)
-Local $lblUserName = GUICtrlCreateLabel("", 200, 490, 200,30)
+Local $closeBtn = GUICtrlCreateButton("Exit", 510, 560, 80, 30)
+GUICtrlSetImage($closeBtn,"icons\exit.ico",221,0)
+Local $helpBtn = GUICtrlCreateButton("About", 420, 560, 80, 30)
+GUICtrlSetImage($helpBtn,"icons\about.ico",221,0)
+Local $lblPythonVersionValue = GUICtrlCreateLabel("", 10, 570, 100,30)
+Local $lblUserName = GUICtrlCreateLabel("", 200, 570, 200,30)
 GUICtrlSetColor ($lblUserName, $COLOR_RED )
 
-GUICtrlCreateGroup("Output path", 10, 420, 580, 50)
-Local $outputHyperlink = GUICtrlCreateInput("", 20, 440, 550, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
+GUICtrlCreateGroup("Output path", 10, 500, 580, 50)
+Local $outputHyperlink = GUICtrlCreateInput("", 20, 520, 560, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
 
 
 Local $PYTHON_FULLTEXT_VERSION =''
@@ -167,6 +176,7 @@ Local $hDelKey = GUICtrlCreateDummy()
 Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
 #EndRegion
+GUICtrlSetOnEvent($refreshAgniKeywordBtn,'refreshAgniKeyword')
 GUICtrlSetOnEvent($closeBtn, "_Close")
 GUICtrlSetOnEvent($helpBtn, "displayHelp")
 GUICtrlSetOnEvent($browseFileBtn, "displayBrowseFile")
@@ -186,20 +196,21 @@ Local $userNameValue = ''
 While True
 	Sleep(200)
 WEnd
+
 Func _Login()
    Local $users = StringSplit(json_get($object,'[users]'),'|')
    If _ArraySearch($users,GUICtrlRead($USERNAME)) >= 1 And GUICtrlRead($PASSWORD) = "" Then
 	  $userNameValue=GUICtrlRead($USERNAME)
 	  GUICtrlSetData($lblUserName,'Welcome to: '& $userNameValue)
 	  GUIDelete($FormLogin)
-	  RunP()
+	  RunApp()
    Else
 	  $userNameValue=''
       MsgBox($MB_ICONERROR,"Error"," Username or Password is not correct !")
    EndIf
  EndFunc; End login
 
-Func RunP()
+Func RunApp()
    GUISetState(@SW_SHOW, $hGUI)
 EndFunc
 
@@ -215,14 +226,17 @@ Func moveDownStep()
 	  ; update value for next row
 	  _GUICtrlListView_AddSubItem($stepList, $Selected + 1, $currentArr[2], 1)
 	  _GUICtrlListView_AddSubItem($stepList, $Selected + 1, $currentArr[3], 2, 2)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected + 1, $currentArr[4], 3, 3)
 	  ; update value for current row
 	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $nextArr[2], 1)
 	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $nextArr[3], 2, 2)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $nextArr[4], 3, 3)
 	  updateIndexNumber()
 	  _GUICtrlListView_EndUpdate($stepList)
    EndIf
 
 EndFunc
+
 Func moveUpStep()
    $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
 
@@ -233,13 +247,16 @@ Func moveUpStep()
 	  ; update value for prev row
 	  _GUICtrlListView_AddSubItem($stepList, $Selected - 1, $currentArr[2], 1)
 	  _GUICtrlListView_AddSubItem($stepList, $Selected - 1, $currentArr[3], 2, 2)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected - 1, $currentArr[4], 3, 3)
 	  ; update value for current row
 	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $prevArr[2], 1)
 	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $prevArr[3], 2, 2)
+	  _GUICtrlListView_AddSubItem($stepList, $Selected+0, $prevArr[4], 3, 3)
 	  updateIndexNumber()
 	  _GUICtrlListView_EndUpdate($stepList)
    EndIf
 EndFunc
+
 Func updateIndexNumber()
    $listCount = _GUICtrlListView_GetItemCount($stepList)
    For $x = 0 To $listCount - 1
@@ -258,6 +275,7 @@ Func updateIndexNumber()
 	  GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
    EndIf
 EndFunc
+
 Func _Arrange_ListStep()
    If _GUICtrlListView_GetItemCount($stepList) > 0 Then
 	  $Selected = _GUICtrlListView_GetHotItem($stepList)
@@ -271,12 +289,14 @@ Func _Arrange_ListStep()
 			_GUICtrlListView_InsertItem($stepList, "", $Dropped + 1)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 1), 1)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 2), 2, 2)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped + 1, _GUICtrlListView_GetItemText($stepList, $Selected, 3), 3, 3)
 			_GUICtrlListView_SetItemChecked($stepList, $Dropped + 1, _GUICtrlListView_GetItemChecked($stepList, $Selected))
 			_GUICtrlListView_DeleteItem($stepList, $Selected)
 		ElseIf $Selected > $Dropped Then
 			_GUICtrlListView_InsertItem($stepList, "", $Dropped)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 1), 1)
 			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 2), 2, 2)
+			_GUICtrlListView_AddSubItem($stepList, $Dropped, _GUICtrlListView_GetItemText($stepList, $Selected + 1, 3), 3, 3)
 			_GUICtrlListView_SetItemChecked($stepList, $Dropped, _GUICtrlListView_GetItemChecked($stepList, $Selected + 1))
 			_GUICtrlListView_DeleteItem($stepList, $Selected + 1)
 		EndIf
@@ -297,11 +317,15 @@ Func addStep()
    EndIf
    updateIndexNumber()
 EndFunc
+
 Func deleteStep()
    $iIndex = _GUICtrlListView_GetSelectedIndices($stepList)
    _GUICtrlListView_DeleteItem($stepList, $iIndex)
    updateIndexNumber()
 EndFunc
+
+#EndRegion
+
 Func changeComboStep()
    $comboValue = GUICtrlRead($idComboBox)
    If $comboValue=='' Then
@@ -310,8 +334,14 @@ Func changeComboStep()
 	  GUICtrlSetState($addStepBtn, $GUI_ENABLE)
 	  bindingDataToAgniKeywordCombobox()
 	  $value = $comboValue
-	  If $comboValue=='run_event' Or $comboValue=='run_keyword' Or $comboValue=='create_dictionary_and_get' Or $comboValue=='create_dictionary_and_check' Then
+	  If $comboValue=='run_event' Or $comboValue=='run_keyword' Then
 		 $value = $comboValue & '_'
+	  EndIf
+	  If $comboValue=='create_dictionary_and_get' Then
+		 $value = 'get_'
+	  EndIf
+	  If $comboValue=='create_dictionary_and_check' Then
+		 $value = 'verify_'
 	  EndIf
 	  GUICtrlSetData($txtKeyword, $value)
    EndIf
@@ -336,15 +366,28 @@ Func bindingDataToAgniKeywordCombobox()
 	  GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
    EndIf
 EndFunc
-#EndRegion
 
 Func stringJoin($array, $slash)
    $result=''
    For $element IN $array
-       $result = $result & ''& $slash &'' & $element
+	  If $result='' Then
+		 $result = $element
+	  Else
+		 $result = $result & ''& $slash &'' & $element
+	  EndIf
    Next
-   ConsoleWrite($result)
    Return $result
+EndFunc
+
+Func refreshAgniKeyword()
+   If Not json_get($object,'[agni_path]') = '' Then
+	  $cmd =$PYTHON_CMD &' main.py -r true'
+	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+	  loadindProgess(500,"Read new keywords from Agni folder","Reading...")
+	  RestartScript()
+   Else
+	  MsgBox($MB_ICONERROR,"Error"," Please update your agni folder !")
+   EndIf
 EndFunc
 
 Func updateAgniPath($new_agni_path)
@@ -396,9 +439,8 @@ Func doGenerateSteps()
 		 EndIf
 		 $arrSteps = $arrSteps & ' "' & $obj & '"'
 	  Next
-	  ConsoleWrite($arrSteps)
+
 	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
-	  ConsoleWrite($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  loadindProgess(500,"Generate testcase","Processing...")
 	  $filePath = @ScriptDir & '\output\'& $fileOfTestcase
@@ -448,6 +490,7 @@ Func displayBrowseFile()
 		ControlSetText($hGUI,"",$inputFile,$sFileOpenDialog)
 	EndIf
 EndFunc
+
 Func displayBrowseFolder()
     ; Create a constant variable in Local scope of the message to display in FileSelectFolder.
     Local Const $sMessage = "Select your AGNI folder"
@@ -497,6 +540,7 @@ Func OpenFile($file_path)
 	  Run($editor & " " & $file_path)
    EndIf
 EndFunc
+
 Func getOutputOfProcess($iPID)
    Local $output = Null
    While 1
@@ -515,9 +559,29 @@ Func getOutputOfProcess($iPID)
    Wend
    Return $output
 EndFunc
+
+Func getRegexByGroup($content, $patten, $groupIndex)
+   $result=''
+   Local $aArray = StringRegExp($content,$patten, $STR_REGEXPARRAYGLOBALMATCH)
+   For $i = 0 To UBound($aArray) - 1
+	  $result = $aArray[$i]
+   Next
+   Return $result
+EndFunc
+
 Func displayHelp()
    MsgBox(0, "About Jtool!", "Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
 EndFunc
+
+Func RestartScript()
+    If @Compiled = 1 Then
+        Run( FileGetShortName(@ScriptFullPath))
+    Else
+        Run( FileGetShortName(@AutoItExe) & " " & FileGetShortName(@ScriptFullPath))
+    EndIf
+    Exit
+EndFunc
+
 Func _Close()
 	Exit(0)
 EndFunc
