@@ -3,7 +3,7 @@
 Granular_tests:
 
     # Owner: nhuu
-    aaa:
+    name_of_testcase:
         common_variables:
                  device: device
         steps:
@@ -15,6 +15,26 @@ Granular_tests:
                              command: 'set cli timestamp'
                          unique_id: 1
                  2:
+                     run_keyword_:
+                         run_keyword:
+                             keyword: 'Should Contain Any    ${response}    ${device_username}    ${hostname}    run show chassis l3-ha-mode fabric status'
+                         unique_id: 2
+                 3:
+                     run_keyword_:
+                         run_keyword:
+                             keyword: '${packet_loss_list}    Get Regexp Matches    ${output}    (\\d+).\\s+packet    1'
+                         unique_id: 3
+                 4:
+                     get_device_ip:
+                         run_keyword:
+                             keyword: "${device_ip}=    Set Variable    ${tv['${device}__${controller}__mgt-ip']}"
+                         unique_id: 4
+                 5:
+                     get_mac_address_of_server:
+                         run_keyword:
+                             keyword: '${mac_of_server}    Get Server Mac Address   ifconfig_op=${response}'
+                         unique_id: 5
+                 6:
                      get_:
                          create_dictionary_and_get:
                              loop_over_list:
@@ -24,14 +44,48 @@ Granular_tests:
                                        - check_keyword_2 # --> need to update
                              devices: device
                              return_variable_name: # --> need to update
-                         unique_id: 2
+                         unique_id: 6
+                         
+    # Owner: tgnuyenngoc
+    name_of_testcase:
+        common_variables:
+                 device: device
+        steps:
+                 1:
+                     add_timestamp:
+                         run_event:
+                             keyword: On CLI
+                             device: device
+                             command: 'set cli timestamp'
+                         unique_id: 7
+                 2:
+                     run_keyword_:
+                         run_keyword:
+                             keyword: 'Should Contain Any    ${response}    ${device_username}    ${hostname}    run show chassis l3-ha-mode fabric status'
+                         unique_id: 8
                  3:
-                     execute_ssh_on_shell_server:
+                     run_keyword_:
                          run_keyword:
-                             keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
-                         unique_id: 3
+                             keyword: '${packet_loss_list}    Get Regexp Matches    ${output}    (\\d+).\\s+packet    1'
+                         unique_id: 9
                  4:
-                     execute_ssh_on_shell_server:
+                     get_device_ip:
                          run_keyword:
-                             keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
-                         unique_id: 4
+                             keyword: "${device_ip}=    Set Variable    ${tv['${device}__${controller}__mgt-ip']}"
+                         unique_id: 10
+                 5:
+                     get_mac_address_of_server:
+                         run_keyword:
+                             keyword: '${mac_of_server}    Get Server Mac Address   ifconfig_op=${response}'
+                         unique_id: 11
+                 6:
+                     get_:
+                         create_dictionary_and_get:
+                             loop_over_list:
+                                 - lag_interfaces_list # --> need to update
+                             checks:
+                                       - check_keyword_1 # --> need to update
+                                       - check_keyword_2 # --> need to update
+                             devices: device
+                             return_variable_name: # --> need to update
+                         unique_id: 12
