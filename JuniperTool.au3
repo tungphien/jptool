@@ -12,6 +12,7 @@
 #include <ColorConstants.au3>
 #include <misc.au3>
 #include <Array.au3>
+#include <GuiComboBox.au3>
 
 Opt("GUIOnEventMode", 1);
 #Region Loading
@@ -100,7 +101,12 @@ For $i = 1 to UBound($aInput) -1
 Next
 _ArraySort($common_funtion, 0)
 _ArraySort($other_function, 0)
-$common_step = stringJoin($common_funtion, '|') & '|' & stringJoin($other_function, '|')
+$break_line = ''
+For $i = 1 To 64 Step 1
+   $break_line=$break_line&'-'
+Next
+$common_step = stringJoin($common_funtion, '|') & '|'& $break_line &'|' & stringJoin($other_function, '|')
+
 #EndRegion
 
 GUICtrlSetData($idComboBox, $common_step)
@@ -110,15 +116,20 @@ Local $txtKeyword = GUICtrlCreateInput("Name of step", 10, 140, 440)
 Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,130,50)
 GUICtrlSetImage($addStepBtn,"icons\add.ico",221,0)
 GUICtrlSetState($addStepBtn, $GUI_DISABLE)
-Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 170,60,60)
+Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 170,60,40)
 GUICtrlSetImage($deleteStepBtn,"icons\delete.ico",221,0)
 GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
-Local $downBtn = GUICtrlCreateButton("Down", 530, 310,60,60)
+Local $downBtn = GUICtrlCreateButton("Down", 530, 270,60,40)
 GUICtrlSetImage($downBtn,"icons\down.ico",221,0)
-Local $upBtn = GUICtrlCreateButton("Up", 530, 240,60,60)
+Local $upBtn = GUICtrlCreateButton("Up", 530, 220,60,40)
 GUICtrlSetImage($upBtn,"icons\up.ico",221,0)
 GUICtrlSetState($downBtn, $GUI_DISABLE)
 GUICtrlSetState($upBtn, $GUI_DISABLE)
+Local $duplicateBtn = GUICtrlCreateButton("Copy", 530, 320,60,40)
+GUICtrlSetImage($duplicateBtn,"icons\duplicate.ico",221,0)
+Local $reloadBtn = GUICtrlCreateButton("Reload", 530, 370,60,40)
+GUICtrlSetImage($reloadBtn,"icons\reload.ico",221,0)
+
 Local $stepList = GUICtrlCreateListView("", 10, 170, 510, 310)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
@@ -130,6 +141,7 @@ _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $L
 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
 Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 530, 420, 60, 60, $BS_ICON)
 GUICtrlSetImage($generateStepBtn, "icons\yaml.ico", 1)
+updateButtonStatus()
 #EndRegion
 
 #Region Tab Format Yaml
@@ -176,6 +188,8 @@ Local $hDelKey = GUICtrlCreateDummy()
 Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
 #EndRegion
+GUICtrlSetOnEvent($duplicateBtn,'duplicateStep')
+GUICtrlSetOnEvent($reloadBtn,'reloadForm')
 GUICtrlSetOnEvent($refreshAgniKeywordBtn,'refreshAgniKeyword')
 GUICtrlSetOnEvent($closeBtn, "_Close")
 GUICtrlSetOnEvent($helpBtn, "displayHelp")
@@ -191,10 +205,15 @@ GUICtrlSetOnEvent($downBtn, "moveDownStep")
 GUICtrlSetOnEvent($upBtn, "moveUpStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
 GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
+GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
 Local $userNameValue = ''
 
 While True
-	Sleep(200)
+	;Sleep(200)
+    Switch _GUICtrlComboBox_GetCurSel($idComboBox)
+	  Case 4
+	      _GUICtrlComboBox_SetCurSel($idComboBox, 5)
+    EndSwitch
 WEnd
 
 Func _Login()
@@ -316,35 +335,41 @@ Func addStep()
 	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "|" & $txtValue&"|"&$agniKeywordValue, $stepList)
    EndIf
    updateIndexNumber()
+   updateButtonStatus()
 EndFunc
 
 Func deleteStep()
    $iIndex = _GUICtrlListView_GetSelectedIndices($stepList)
    _GUICtrlListView_DeleteItem($stepList, $iIndex)
    updateIndexNumber()
+   updateButtonStatus()
 EndFunc
 
 #EndRegion
 
 Func changeComboStep()
    $comboValue = GUICtrlRead($idComboBox)
+   If  StringInStr($comboValue, "--")>0 Then
+	   $comboValue = ""
+	   _GUICtrlComboBox_SetEditText($idComboBox, $comboValue)
+   EndIf
+
    If $comboValue=='' Then
 	  GUICtrlSetState($addStepBtn, $GUI_DISABLE)
    Else
 	  GUICtrlSetState($addStepBtn, $GUI_ENABLE)
 	  bindingDataToAgniKeywordCombobox()
-	  $value = $comboValue
 	  If $comboValue=='run_event' Or $comboValue=='run_keyword' Then
-		 $value = $comboValue & '_'
+		 $comboValue = $comboValue & '_'
 	  EndIf
 	  If $comboValue=='create_dictionary_and_get' Then
-		 $value = 'get_'
+		 $comboValue = 'get_'
 	  EndIf
 	  If $comboValue=='create_dictionary_and_check' Then
-		 $value = 'verify_'
+		 $comboValue = 'verify_'
 	  EndIf
-	  GUICtrlSetData($txtKeyword, $value)
    EndIf
+   GUICtrlSetData($txtKeyword, $comboValue)
 EndFunc
 
 Func bindingDataToAgniKeywordCombobox()
@@ -411,7 +436,11 @@ EndFunc
 
 Func validateFormBeforeGenerate()
    $testcaseName = GUICtrlRead($txtTestcaseName)
+   $fileName = GUICtrlRead($cmbFileName)
    $validateMsg=''
+   If $fileName='' Or StringInStr($fileName,' ') Then
+	  $validateMsg=$validateMsg & 'Invalid name of testcase file !'& @CRLF
+   EndIf
    If $testcaseName='' Or StringInStr($testcaseName,' ') Then
 	  $validateMsg=$validateMsg & 'Invalid name of testcase !'& @CRLF
    EndIf
@@ -584,4 +613,70 @@ EndFunc
 
 Func _Close()
 	Exit(0)
+EndFunc
+
+#Region AutoCompleted AgniKeyword Combobox
+Func _Edit_Changed($cCombo)
+    _GUICtrlComboBox_AutoComplete($cCombo)
+EndFunc   ;==>_Edit_Changed
+
+Func WM_COMMAND($hWnd, $iMsg, $iwParam, $ilParam)
+
+    #forceref $hWnd, $iMsg, $ilParam
+
+    $iIDFrom = BitAND($iwParam, 0xFFFF) ; Low Word
+    $iCode = BitShift($iwParam, 16) ; Hi Word
+    If $iCode = $CBN_EDITCHANGE Then
+        Switch $iIDFrom
+            Case $cmbAgniKeyword
+                _Edit_Changed($cmbAgniKeyword)
+            ;Case $cCombo2
+                ;_Edit_Changed($cCombo2)
+        EndSwitch
+    EndIf
+    Return $GUI_RUNDEFMSG
+ EndFunc   ;==>WM_COMMAND
+#EndRegion
+#EndRegion
+Func duplicateStep()
+   $listCount = _GUICtrlListView_GetItemCount($stepList)
+   $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
+   $currentArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $Selected+0),'|')
+   ; insert this value for new row
+   GUICtrlCreateListViewItem($listCount + 1 &"|"& $currentArr[2] & "|" & $currentArr[3]&"|"&$currentArr[4], $stepList)
+EndFunc
+Func reloadForm()
+   ; reset testcase file name
+   GUICtrlSetData($cmbFileName,'')
+   GUICtrlSetData($cmbFileName,$testcase_FileName,'')
+   ; reset testcase name
+   GUICtrlSetData($txtTestcaseName,'')
+   ; reset combo common function step
+   GUICtrlSetData($idComboBox, '')
+   GUICtrlSetData($idComboBox, $common_step, '')
+   ; reset combo keyword
+   GUICtrlSetData($cmbAgniKeyword, '')
+   GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
+   ; reset textbox name of keyword
+   GUICtrlSetData($txtKeyword, '')
+   ; reset list Step
+   _GUICtrlListView_DeleteAllItems($stepList)
+   ; Set default add_timestamp
+   GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
+   ; update status button
+   updateButtonStatus()
+   GUICtrlSetState($addStepBtn, $GUI_DISABLE)
+   GUICtrlSetState($upBtn, $GUI_DISABLE)
+   GUICtrlSetState($downBtn, $GUI_DISABLE)
+   ; reset output path
+   GUICtrlSetData($outputHyperlink, '')
+EndFunc
+
+Func updateButtonStatus()
+   $listCount = _GUICtrlListView_GetItemCount($stepList)
+   If $listCount>0 Then
+	  GUICtrlSetState($duplicateBtn, $GUI_ENABLE)
+   Else
+	  GUICtrlSetState($duplicateBtn, $GUI_DISABLE)
+   EndIf
 EndFunc

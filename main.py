@@ -5,10 +5,12 @@ import re
 from argparse import ArgumentParser
 import json
 import glob
+import sys
 
 AGNI_KEYWORD_TEMP_FILES = 'agni_keywords.json'
 TESTCASE_TEMPLATE_FILE = 'tcs.yaml'
 CONFIG_FILE = 'config.json'
+
 
 def detectCommentLine(yaml_content, format_structure):
   regex = r"(#.*)\n([\s]{0,})(.*)\n"
@@ -25,45 +27,27 @@ def detectCommentLine(yaml_content, format_structure):
 
   return format_structure
 
-
-def detectChecksOption(yaml_content, format_structure):
-  checks_options = re.findall('(- .*)\n', yaml_content)
-  for item in checks_options:
-    format_structure[item.strip() + '@None'] = 39
-  return format_structure
-
-
-def detect_common_variables(yaml_content, format_structure):
+def detect_sub_block_by_words(yaml_content, format_structure, begin_from_list_words, end_word,
+                              detect_character_per_line, space):
   found = False
   i = 0
   for line in yaml_content.split('\n'):
     i = i + 1
-    if "common_variables" in line:
+    if line.strip() in begin_from_list_words:
       found = True
       continue
-    if found and "steps" not in line:
-      format_structure[line.strip() + '@' + str(i)] = 17
-    if "steps" in line:
-      found = False
-      continue
-
-  return format_structure
-
-
-def detect_subcommon_function(yaml_content, format_structure):
-  found = False
-  i = 0
-  for line in yaml_content.split('\n'):
-    i = i + 1
-    if 'run_keyword:' in line or 'run_event:' in line \
-            or 'create_dictionary_and_get' in line or 'create_dictionary_and_check' in line:
-      found = True
-      continue
-    if found and "unique_id" not in line:
-      format_structure[line.strip() + '@' + str(i)] = 29
-    if "unique_id" in line:
-      found = False
-      continue
+    if end_word is not None:
+      if found and end_word not in line:
+        format_structure[line.strip() + '@' + str(i)] = space
+      if end_word in line:
+        found = False
+        continue
+    if detect_character_per_line is not None:
+      if found and line.__contains__(detect_character_per_line):
+        format_structure[line.strip() + '@' + str(i)] = space
+      else:
+        found = False
+        continue
 
   return format_structure
 
@@ -74,7 +58,8 @@ def detect_file(yaml_content, format_structure):
   for item in testcase_name_list:
     format_structure[item.strip() + '@None'] = 4
   # detect all common variables
-  format_structure = detect_common_variables(yaml_content, format_structure)
+  format_structure = detect_sub_block_by_words(yaml_content, format_structure,
+                                               ['common_variables:'], 'steps:', None, 17)
   # detect index step
   index_step_list = re.findall('\n[\s]{0,}(\d+:)\n', yaml_content)
   for item in index_step_list:
@@ -91,13 +76,22 @@ def detect_file(yaml_content, format_structure):
   index_substep_value_list = re.findall('(.*_value:.*\n)', yaml_content)
   for item in index_substep_value_list:
     format_structure[item.strip() + '@None'] = 29
-  # detect checks options
-  format_structure = detectChecksOption(yaml_content, format_structure)
   # detect comment line
   format_structure = detectCommentLine(yaml_content, format_structure)
   # detect sub command of run_event, run_keyword, create_dictionary_and_get,..
-  format_structure = detect_subcommon_function(yaml_content, format_structure)
+  format_structure = detect_sub_block_by_words(yaml_content, format_structure,
+                                               ['run_event:', 'run_keyword:', 'create_dictionary_and_get:',
+                                                'create_dictionary_and_check:'], 'unique_id', None, 29)
+  # detect sub command of checks options
+  format_structure = detect_sub_block_by_words(yaml_content, format_structure,
+                                               ['checks:'], None, '- ', 39)
+  # detect sub command of loop_over_list options
+  format_structure = detect_sub_block_by_words(yaml_content, format_structure,
+                                               ['loop_over_list:'], None, '- ', 33)
+
   return format_structure
+
+
 
 
 def update_unique_ids_and_format(yaml_file=None, uid=1):
@@ -244,7 +238,6 @@ def readAgniKeyword():
     with open(file_path, 'r') as fr:
       yaml_content = fr.read()
       yaml_contents = yaml_contents + '\n' + yaml_content
-  # print(yaml_contents)
 
   list_keywords = re.findall('keyword:(.*)\n', yaml_contents)
   keywords_without_run_event = {}
@@ -270,13 +263,17 @@ def readAgniKeyword():
         else:
           keywords_without_run_event[keyword_name] = keyword_content
   data = {
-    'keywords': keywords_without_run_event.keys(),
+    'keywords': [],
     'content': keywords_without_run_event
   }
+  if sys.version_info[0] < 3:
+    data['keywords'] = keywords_without_run_event.keys()
+  else:
+    for i in keywords_without_run_event.keys():
+      data['keywords'].append(i)
 
   with open(AGNI_KEYWORD_TEMP_FILES, 'w') as outfile:
     json.dump(data, outfile)
-  print data
 
 
 def main():
@@ -305,6 +302,7 @@ def main():
     generateStep(listStep, file_name, testcase_name, username)
   if ragni is not None:
     readAgniKeyword()
+
 
 if __name__ == '__main__':
   main()

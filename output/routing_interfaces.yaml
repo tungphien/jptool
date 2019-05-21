@@ -1,0 +1,37 @@
+---
+
+Granular_tests:
+
+    # Owner: nhuu
+    aaa:
+        common_variables:
+                 device: device
+        steps:
+                 1:
+                     add_timestamp:
+                         run_event:
+                             keyword: On CLI
+                             device: device
+                             command: 'set cli timestamp'
+                         unique_id: 1
+                 2:
+                     get_:
+                         create_dictionary_and_get:
+                             loop_over_list:
+                                 - lag_interfaces_list # --> need to update
+                             checks:
+                                       - check_keyword_1 # --> need to update
+                                       - check_keyword_2 # --> need to update
+                             devices: device
+                             return_variable_name: # --> need to update
+                         unique_id: 2
+                 3:
+                     execute_ssh_on_shell_server:
+                         run_keyword:
+                             keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
+                         unique_id: 3
+                 4:
+                     execute_ssh_on_shell_server:
+                         run_keyword:
+                             keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
+                         unique_id: 4
