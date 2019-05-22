@@ -13,6 +13,7 @@
 #include <misc.au3>
 #include <Array.au3>
 #include <GuiComboBox.au3>
+#include <Word.au3>
 
 Opt("GUIOnEventMode", 1);
 #Region Loading
@@ -73,11 +74,12 @@ Local $cmbFileName = GUICtrlCreateCombo("", 130, 40, 300)
 GUICtrlCreateLabel("(*)", 440, 40)
 GUICtrlSetColor (-1, $COLOR_RED )
 Local $testcase_FileName =json_get($object,'[testcase_filename]')
-GUICtrlSetData($cmbFileName, $testcase_FileName, "routing_interfaces.yaml")
 GUICtrlCreateLabel("Name of testcase", 20, 70, 200)
 Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 70,300)
 GUICtrlCreateLabel("(*)", 440, 70)
 GUICtrlSetColor (-1, $COLOR_RED )
+Local $loadMTPBtn = GUICtrlCreateButton("Load MTP", 460, 40,120,50)
+GUICtrlSetImage($loadMTPBtn,"icons\word.ico",221,0)
 
 Local $idComboBox = GUICtrlCreateCombo("", 10, 110,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL))
 #Region Read tsc.yaml
@@ -89,14 +91,13 @@ $common_step = ''
 Local $common_funtion[0]=[]
 Local $other_function[0]=[]
 For $i = 1 to UBound($aInput) -1
-    $data = getRegexByGroup($aInput[$i],'#(.*)@',0)
+    $data = getRegexPatten($aInput[$i],'#(.*)@')
 	if Not $data='' Then
 	  If $data='run_event' Or $data='run_keyword' Or $data='create_dictionary_and_get' Or $data='create_dictionary_and_check' Then
 		 _ArrayAdd($common_funtion,$data)
 	  Else
 		 _ArrayAdd($other_function, $data)
 	  EndIf
-	  ;$common_step = $common_step & '|' & $data
     EndIf
 Next
 _ArraySort($common_funtion, 0)
@@ -109,22 +110,16 @@ $common_step = stringJoin($common_funtion, '|') & '|'& $break_line &'|' & string
 
 #EndRegion
 
-GUICtrlSetData($idComboBox, $common_step)
 Local $cmbAgniKeyword = GUICtrlCreateCombo("", 220, 110, 230,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
-GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
 Local $txtKeyword = GUICtrlCreateInput("Name of step", 10, 140, 440)
 Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,130,50)
 GUICtrlSetImage($addStepBtn,"icons\add.ico",221,0)
-GUICtrlSetState($addStepBtn, $GUI_DISABLE)
 Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 170,60,40)
 GUICtrlSetImage($deleteStepBtn,"icons\delete.ico",221,0)
-GUICtrlSetState($deleteStepBtn, $GUI_DISABLE)
 Local $downBtn = GUICtrlCreateButton("Down", 530, 270,60,40)
 GUICtrlSetImage($downBtn,"icons\down.ico",221,0)
 Local $upBtn = GUICtrlCreateButton("Up", 530, 220,60,40)
 GUICtrlSetImage($upBtn,"icons\up.ico",221,0)
-GUICtrlSetState($downBtn, $GUI_DISABLE)
-GUICtrlSetState($upBtn, $GUI_DISABLE)
 Local $duplicateBtn = GUICtrlCreateButton("Copy", 530, 320,60,40)
 GUICtrlSetImage($duplicateBtn,"icons\duplicate.ico",221,0)
 Local $reloadBtn = GUICtrlCreateButton("Reload", 530, 370,60,40)
@@ -176,24 +171,23 @@ GUICtrlSetColor ($lblUserName, $COLOR_RED )
 
 GUICtrlCreateGroup("Output path", 10, 500, 580, 50)
 Local $outputHyperlink = GUICtrlCreateInput("", 20, 520, 560, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
-
-
 Local $PYTHON_FULLTEXT_VERSION =''
 Local $PYTHON_CMD = getPythonVersion()
-GUICtrlSetData($lblPythonVersionValue,$PYTHON_FULLTEXT_VERSION)
-;GUISetState(@SW_SHOW, $hGUI)
+
 #EndRegion
+initForm()
 #Region Delete Key detect
 Local $hDelKey = GUICtrlCreateDummy()
 Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
 #EndRegion
 GUICtrlSetOnEvent($duplicateBtn,'duplicateStep')
-GUICtrlSetOnEvent($reloadBtn,'reloadForm')
+GUICtrlSetOnEvent($reloadBtn,'initForm')
 GUICtrlSetOnEvent($refreshAgniKeywordBtn,'refreshAgniKeyword')
 GUICtrlSetOnEvent($closeBtn, "_Close")
 GUICtrlSetOnEvent($helpBtn, "displayHelp")
-GUICtrlSetOnEvent($browseFileBtn, "displayBrowseFile")
+GUICtrlSetOnEvent($browseFileBtn, "browseYamlFile")
+GUICtrlSetOnEvent($loadMTPBtn, "browseWordFile")
 GUICtrlSetOnEvent($browseAgniPathBtn, "displayBrowseFolder")
 GUICtrlSetOnEvent($formatFileBtn, "doFormat")
 GUICtrlSetOnEvent($generateStepBtn, "doGenerateSteps")
@@ -378,7 +372,7 @@ Func bindingDataToAgniKeywordCombobox()
 	  GUICtrlSetState($cmbAgniKeyword, $GUI_ENABLE)
 	  If $comboValue=='run_event' Then
 		 GUICtrlSetData($cmbAgniKeyword, '')
-		 GUICtrlSetData($cmbAgniKeyword, 'On CLI|On Config')
+		 GUICtrlSetData($cmbAgniKeyword, json_get($object,'[run_event_keywords]'))
 	  EndIf
 	  If $comboValue=='run_keyword' Then
 		 ; get all keyword from agni
@@ -494,13 +488,101 @@ Func doFormat()
 
 EndFunc
 
-Func displayBrowseFile()
+Func browseYamlFile()
+   $sFileOpenDialog = displayBrowseFile('(*.yaml)')
+   ControlSetText($hGUI,"",$inputFile, $sFileOpenDialog)
+EndFunc
 
+Func browseWordFile()
+   $sFileOpenDialog = displayBrowseFile('(*.docx)}(*.doc)')
+   If Not $sFileOpenDialog='' Then
+	  handleMTP($sFileOpenDialog)
+   EndIf
+EndFunc
+
+Func aliasNameByCharacter($str, $pattern, $character)
+   $str = StringRegExpReplace($str,$pattern," ")
+   $str = StringStripWS($str, $STR_STRIPLEADING + $STR_STRIPTRAILING + $STR_STRIPSPACES)
+   $str=StringLower(StringRegExpReplace($str,' ', $character))
+   Return $str
+EndFunc
+
+Func handleMTP($sPath)
+   loadindProgess(500,"Loading command from MTP file.","Reading...")
+   Local $oWord = _Word_Create()
+   Local $oDoc = _Word_DocOpen($oWord, $sPath)
+   Local $oRange = $oDoc.Range
+   Local $sText = $oRange.Text
+   Local $aLines = StringSplit($sText, @CR)
+
+   Local $all_commands[0]=[]
+   $testcase_name='name_of_testcase'
+
+   $RegExNonStandard="(?i)([^a-z0-9-_])|:|-"
+   $i=0
+   $found_name=False
+   $line_count = UBound($aLines)
+   For $element IN $aLines
+	  If $i < $line_count-2 Then
+		 $next_line_content = $aLines[$i+1]
+		 If $element='Name' and $found_name=False Then
+			$testcase_name = aliasNameByCharacter($next_line_content,$RegExNonStandard, "_")
+			$found_name=True
+		 Else
+			If $element='Objective' and $found_name=False Then
+			   $testcase_name = aliasNameByCharacter($next_line_content,$RegExNonStandard,"_")
+			EndIf
+		 EndIf
+	  EndIf
+
+	  $command = ''
+	  If StringInStr($element,'# ') Then
+		 $command = StringSplit($element,'#')[2]
+		 $command = StringStripWS($command, $STR_STRIPLEADING)
+		 _ArrayAdd($all_commands, $command ,0,@CRLF)
+	  EndIf
+	  If Not getRegexPatten($element,'>\s{0,}(show.*)')='' Then
+		 $command = StringSplit($element,'>')[2]
+		 $command = StringStripWS($command, $STR_STRIPLEADING)
+		 _ArrayAdd($all_commands, $command,0,@CRLF)
+	  EndIf
+	  $i=$i+1
+   Next
+   _Word_DocClose($oDoc)
+   _Word_Quit($oWord)
+   GUICtrlSetData($txtTestcaseName,$testcase_name)
+   addStepByListCommands($all_commands)
+EndFunc
+
+Func addStepByListCommands($all_commands)
+   ; reset list Step
+   _GUICtrlListView_DeleteAllItems($stepList)
+   For $command In $all_commands
+	  $step_name = aliasNameByCharacter($command,'\s+|/|-|\|',"_")
+	  $funtion_stepname = 'run_keyword'
+	  $keyword = ''
+	  If getRegexPatten($command,'^show\s.*') Then
+		 $funtion_stepname = 'create_dictionary_and_check'
+		 $step_name = StringRegExpReplace($step_name,'^show_',"verify_")
+	  Else
+		 If getRegexPatten($command,'^set\s.*') or getRegexPatten($command,'^commit\s.*') or getRegexPatten($command,'^delete\s.*') Then
+			$funtion_stepname = 'run_event'
+			$keyword = 'On CLI'
+		 Else
+			$funtion_stepname = 'run_keyword'
+		 EndIf
+	  EndIf
+	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $funtion_stepname & "|" & $step_name&"|"&$keyword, $stepList)
+   Next
+EndFunc
+
+Func displayBrowseFile($format)
+   ;ConsoleWrite("your yaml file (*." & $format & ")")
 	; Create a constant variable in Local scope of the message to display in FileOpenDialog.
-	Local Const $sMessage = "Hold down Ctrl or Shift to choose multiple files."
+	Local Const $sMessage = "Select your files."
 
 	; Display an open dialog to select a list of file(s).
-	Local $sFileOpenDialog = FileOpenDialog($sMessage, @WindowsDir & "\", "your yaml file (*.yaml)", BitOR($FD_FILEMUSTEXIST, $FD_MULTISELECT))
+	Local $sFileOpenDialog = FileOpenDialog($sMessage, @WindowsDir & "\", "Select your file in format "& $format &"", $FD_FILEMUSTEXIST)
 	If @error Then
 		; Display the error message.
 		MsgBox($MB_SYSTEMMODAL, "", "No file(s) were selected.")
@@ -516,7 +598,7 @@ Func displayBrowseFile()
 
 		; Display the list of selected files.
 		;MsgBox($MB_SYSTEMMODAL, "", "You chose the following files:" & @CRLF & $sFileOpenDialog)
-		ControlSetText($hGUI,"",$inputFile,$sFileOpenDialog)
+		Return $sFileOpenDialog
 	EndIf
 EndFunc
 
@@ -589,7 +671,7 @@ Func getOutputOfProcess($iPID)
    Return $output
 EndFunc
 
-Func getRegexByGroup($content, $patten, $groupIndex)
+Func getRegexPatten($content, $patten)
    $result=''
    Local $aArray = StringRegExp($content,$patten, $STR_REGEXPARRAYGLOBALMATCH)
    For $i = 0 To UBound($aArray) - 1
@@ -645,10 +727,10 @@ Func duplicateStep()
    ; insert this value for new row
    GUICtrlCreateListViewItem($listCount + 1 &"|"& $currentArr[2] & "|" & $currentArr[3]&"|"&$currentArr[4], $stepList)
 EndFunc
-Func reloadForm()
+Func initForm()
    ; reset testcase file name
    GUICtrlSetData($cmbFileName,'')
-   GUICtrlSetData($cmbFileName,$testcase_FileName,'')
+   GUICtrlSetData($cmbFileName, $testcase_FileName, "routing_interfaces.yaml")
    ; reset testcase name
    GUICtrlSetData($txtTestcaseName,'')
    ; reset combo common function step
@@ -670,6 +752,7 @@ Func reloadForm()
    GUICtrlSetState($downBtn, $GUI_DISABLE)
    ; reset output path
    GUICtrlSetData($outputHyperlink, '')
+   GUICtrlSetData($lblPythonVersionValue,$PYTHON_FULLTEXT_VERSION)
 EndFunc
 
 Func updateButtonStatus()

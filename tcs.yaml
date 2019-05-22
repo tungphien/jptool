@@ -56,6 +56,7 @@ Granular_tests:
                      step_name:
                          run_keyword:
                              keyword: '<<keyword>>'
+                             return_variable_name: dh
                          unique_id: 1
                  #####
                  #run_event@
