@@ -103,24 +103,15 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
     "checks:@None": 29,
     "loop_over_list:@None": 29
   }
-  unique_ids_mapping = {
-    'routing_interfaces.yaml': 1,
-    'routing_mpls.yaml': 5000,
-    'routing_platform.yaml': 10000,
-    'routing_protocols.yaml': 15000,
-    'dc_ethernet_switching.yaml': 20000,
-    'dc_interfaces.yaml': 25000,
-    'dc_management.yaml': 30000,
-    'dc_protocols.yaml': 35000,
-    'dc_security.yaml': 40000,
-    'dc_virtualchassis.yaml': 45000,
-    'platform_fusion.yaml': 50000,
-    'security_interface.yaml': 55000,
-    'platform.yaml': 60000,
-    'security_platform.yaml': 65000,
-    'security_ipsec.yaml': 70000,
-    'security_firewall.yaml': 75000
-  }
+  with open(CONFIG_FILE) as json_file:
+    config_data = json.load(json_file)
+
+  unique_ids_mapping = {}
+  file_name_obj_arr = config_data['testcase_filename'].split('|')
+  for item in  file_name_obj_arr:
+    item_arr = item.split('@')
+    unique_ids_mapping[item_arr[0]]= item_arr[1]
+
   yaml_file_name = os.path.split(yaml_file)[-1]
 
   if yaml_file_name in unique_ids_mapping.keys():
@@ -166,9 +157,9 @@ def generateStep(arrStepObjs, file_name, testcase_name, username):
   for stepObj in arrStepObjs:
     if stepObj != '':
       arrItem = stepObj.split('#')
-      data = {'function_step': arrItem[0], 'step_name': arrItem[1]}
+      data = {'step_name': arrItem[0], 'keyword': arrItem[1]}
       if len(arrItem) >= 3:
-        data['keyword'] = arrItem[2]
+        data['sub-keyword'] = arrItem[2]
       stepsToWrite = getStepContent(data, stepsToWrite)
   pth_of_file = 'output/test_case_generate.yaml'
   if file_name is not None:
@@ -209,16 +200,16 @@ def getStepContent(stepObj, result):
   found = False
   for line in yaml_content.split('\n'):
     # detect step to write
-    if re.sub(r"#|@", "", line).strip() == stepObj['function_step']:
+    if re.sub(r"#|@", "", line).strip() == stepObj['keyword']:
       found = True
       continue
     if found and '#####' not in line:
       line = line.replace('step_name', stepObj['step_name'])
-      if 'keyword' in stepObj.keys():
-        if stepObj['keyword'] in agni_keyword_data.keys():
-          line = line.replace('<<keyword>>', agni_keyword_data[stepObj['keyword']])
+      if 'sub-keyword' in stepObj.keys():
+        if stepObj['sub-keyword'] in agni_keyword_data.keys():
+          line = line.replace('<<sub-keyword>>', agni_keyword_data[stepObj['sub-keyword']])
         else:
-          line = line.replace('<<keyword>>', stepObj['keyword'])
+          line = line.replace('<<sub-keyword>>', stepObj['sub-keyword'])
       result = result + line + '\n'
     if "#####" in line:
       found = False

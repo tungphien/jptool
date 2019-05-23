@@ -15,6 +15,8 @@
 #include <GuiComboBox.au3>
 #include <Word.au3>
 
+Global $ComboBox_NameOfStep_Changed = False
+
 Opt("GUIOnEventMode", 1);
 #Region Loading
 loadindProgess(500,"Load Juniper Tool","Openning Program")
@@ -73,7 +75,7 @@ GUICtrlCreateLabel("Testcase file", 20, 40, 200)
 Local $cmbFileName = GUICtrlCreateCombo("", 130, 40, 300)
 GUICtrlCreateLabel("(*)", 440, 40)
 GUICtrlSetColor (-1, $COLOR_RED )
-Local $testcase_FileName =json_get($object,'[testcase_filename]')
+Local $testcase_FileName = StringRegExpReplace(json_get($object,'[testcase_filename]'),'@\d+','')
 GUICtrlCreateLabel("Name of testcase", 20, 70, 200)
 Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 70,300)
 GUICtrlCreateLabel("(*)", 440, 70)
@@ -81,37 +83,30 @@ GUICtrlSetColor (-1, $COLOR_RED )
 Local $loadMTPBtn = GUICtrlCreateButton("Load MTP", 460, 40,120,50)
 GUICtrlSetImage($loadMTPBtn,"icons\word.ico",221,0)
 
-Local $idComboBox = GUICtrlCreateCombo("", 10, 110,200,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL))
 #Region Read tsc.yaml
 Local $aInput
 $file = "tcs.yaml"
 
 _FileReadToArray($file, $aInput)
+$common_keyword = ''
 $common_step = ''
-Local $common_funtion[0]=[]
-Local $other_function[0]=[]
 For $i = 1 to UBound($aInput) -1
     $data = getRegexPatten($aInput[$i],'#(.*)@')
 	if Not $data='' Then
 	  If $data='run_event' Or $data='run_keyword' Or $data='create_dictionary_and_get' Or $data='create_dictionary_and_check' Then
-		 _ArrayAdd($common_funtion,$data)
+		 $common_keyword = $common_keyword &'|' & $data
 	  Else
-		 _ArrayAdd($other_function, $data)
+		 $common_step = $common_step &'|' & $data
 	  EndIf
     EndIf
 Next
-_ArraySort($common_funtion, 0)
-_ArraySort($other_function, 0)
-$break_line = ''
-For $i = 1 To 64 Step 1
-   $break_line=$break_line&'-'
-Next
-$common_step = stringJoin($common_funtion, '|') & '|'& $break_line &'|' & stringJoin($other_function, '|')
 
 #EndRegion
 
-Local $cmbAgniKeyword = GUICtrlCreateCombo("", 220, 110, 230,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
-Local $txtKeyword = GUICtrlCreateInput("Name of step", 10, 140, 440)
+Local $cmbNameOfStep = GUICtrlCreateCombo("Name of step", 10, 110, 440, 21, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+Local $cmbKeyword = GUICtrlCreateCombo("", 10, 140,200,21, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+Local $cmbSubKeyword = GUICtrlCreateCombo("", 220, 140, 230,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+
 Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,130,50)
 GUICtrlSetImage($addStepBtn,"icons\add.ico",221,0)
 Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 170,60,40)
@@ -128,9 +123,9 @@ GUICtrlSetImage($reloadBtn,"icons\reload.ico",221,0)
 Local $stepList = GUICtrlCreateListView("", 10, 170, 510, 310)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
-_GUICtrlListView_InsertColumn($stepList, 1, "Function of step", 150)
-_GUICtrlListView_InsertColumn($stepList, 2, "Name of Step", 150)
-_GUICtrlListView_InsertColumn($stepList, 3, "Keyword", 150)
+_GUICtrlListView_InsertColumn($stepList, 1, "Name of step", 150)
+_GUICtrlListView_InsertColumn($stepList, 2, "Keyword", 150)
+_GUICtrlListView_InsertColumn($stepList, 3, "Sub-Keyword", 150)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
 ; Set default add_timestamp
 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
@@ -148,9 +143,9 @@ GUICtrlCreateGroup("Actions", 10, 80, 580, 70)
 Local $formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 105, 180, 30)
 GUICtrlSetImage($formatFileBtn,"icons\format.ico",221,0)
 #EndRegion
-GUICtrlCreateTabItem("Setting")
 
 #Region Tab Setting
+GUICtrlCreateTabItem("Setting")
 Local $openOutputWhenDone = GUICtrlCreateCheckbox("Open output when done", 10, 30)
 GUICtrlSetState($openOutputWhenDone, $GUI_CHECKED)
 Local $inputAgniPath = GUICtrlCreateInput("",10, 60, 480,30)
@@ -159,14 +154,17 @@ Local $browseAgniPathBtn = GUICtrlCreateButton("Browse folder", 500, 60, 90, 30)
 Local $refreshAgniKeywordBtn = GUICtrlCreateButton("Refresh Agni Keyword", 10, 100, 150, 30)
 GUICtrlSetImage($refreshAgniKeywordBtn,"icons\refresh.ico",221,0)
 #EndRegion
+
+#Region Tab About
+GUICtrlCreateTabItem("About")
+Local $lblAbout = GUICtrlCreateLabel("", 10, 30, 600,480)
+GUICtrlSetData($lblAbout,"Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
+#EndRegion
+
 GUICtrlCreateTabItem("") ; end tabitem definition
 
-Local $closeBtn = GUICtrlCreateButton("Exit", 510, 560, 80, 30)
-GUICtrlSetImage($closeBtn,"icons\exit.ico",221,0)
-Local $helpBtn = GUICtrlCreateButton("About", 420, 560, 80, 30)
-GUICtrlSetImage($helpBtn,"icons\about.ico",221,0)
-Local $lblPythonVersionValue = GUICtrlCreateLabel("", 10, 570, 100,30)
-Local $lblUserName = GUICtrlCreateLabel("", 200, 570, 200,30)
+Local $lblPythonVersionValue = GUICtrlCreateLabel("", 530, 570, 100,30)
+Local $lblUserName = GUICtrlCreateLabel("", 10, 570, 200,30)
 GUICtrlSetColor ($lblUserName, $COLOR_RED )
 
 GUICtrlCreateGroup("Output path", 10, 500, 580, 50)
@@ -184,8 +182,6 @@ GUISetAccelerators($AccelKeys)
 GUICtrlSetOnEvent($duplicateBtn,'duplicateStep')
 GUICtrlSetOnEvent($reloadBtn,'initForm')
 GUICtrlSetOnEvent($refreshAgniKeywordBtn,'refreshAgniKeyword')
-GUICtrlSetOnEvent($closeBtn, "_Close")
-GUICtrlSetOnEvent($helpBtn, "displayHelp")
 GUICtrlSetOnEvent($browseFileBtn, "browseYamlFile")
 GUICtrlSetOnEvent($loadMTPBtn, "browseWordFile")
 GUICtrlSetOnEvent($browseAgniPathBtn, "displayBrowseFolder")
@@ -194,7 +190,8 @@ GUICtrlSetOnEvent($generateStepBtn, "doGenerateSteps")
 GUICtrlSetOnEvent($addStepBtn, "addStep")
 GUICtrlSetOnEvent($deleteStepBtn, "deleteStep")
 GUICtrlSetOnEvent($hDelKey, "deleteStep")
-GUICtrlSetOnEvent($idComboBox, "changeComboStep")
+GUICtrlSetOnEvent($cmbKeyword, "changeComboKeyword")
+GUICtrlSetOnEvent($cmbNameOfStep,"changeComboStep")
 GUICtrlSetOnEvent($downBtn, "moveDownStep")
 GUICtrlSetOnEvent($upBtn, "moveUpStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
@@ -204,10 +201,14 @@ Local $userNameValue = ''
 
 While True
 	;Sleep(200)
-    Switch _GUICtrlComboBox_GetCurSel($idComboBox)
-	  Case 4
-	      _GUICtrlComboBox_SetCurSel($idComboBox, 5)
-    EndSwitch
+   Switch _GUICtrlComboBox_GetCurSel($cmbKeyword)
+   Case 4
+	   _GUICtrlComboBox_SetCurSel($cmbKeyword, 5)
+   EndSwitch
+   If $ComboBox_NameOfStep_Changed Then
+	 $ComboBox_NameOfStep_Changed = False
+	 changeComboStep()
+   EndIf
 WEnd
 
 Func _Login()
@@ -320,13 +321,17 @@ Func _Arrange_ListStep()
 EndFunc
 
 Func addStep()
-   $comboValue = GUICtrlRead($idComboBox)
-   $txtValue = GUICtrlRead($txtKeyword)
-   $agniKeywordValue = GUICtrlRead($cmbAgniKeyword)
-   If $txtValue='' Or StringInStr($txtValue,' ') Then
+   $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
+   $cmbKeywordValue = GUICtrlRead($cmbKeyword)
+   $cmbSubKeywordValue = GUICtrlRead($cmbSubKeyword)
+   If $cmbNameOfStepValue='' Or StringInStr($cmbNameOfStepValue,' ') Then
 	  MsgBox($MB_ICONERROR, "", "Invalid name of step !")
    Else
-	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $comboValue & "|" & $txtValue&"|"&$agniKeywordValue, $stepList)
+	  If StringInStr($common_step,$cmbNameOfStepValue) > 0 Then
+		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $cmbNameOfStepValue & "| | ", $stepList)
+	  Else
+		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $cmbNameOfStepValue & "|" & $cmbKeywordValue&"|"&$cmbSubKeywordValue, $stepList)
+	  EndIf
    EndIf
    updateIndexNumber()
    updateButtonStatus()
@@ -342,47 +347,55 @@ EndFunc
 #EndRegion
 
 Func changeComboStep()
-   $comboValue = GUICtrlRead($idComboBox)
-   If  StringInStr($comboValue, "--")>0 Then
-	   $comboValue = ""
-	   _GUICtrlComboBox_SetEditText($idComboBox, $comboValue)
+   $comboValue = GUICtrlRead($cmbNameOfStep)
+   If $comboValue <> '' Then
+	  GUICtrlSetState($addStepBtn, $GUI_ENABLE)
+	  If StringInStr($common_step, $comboValue)>0 Then
+		 GUICtrlSetState($cmbKeyword, $GUI_DISABLE)
+		 GUICtrlSetState($cmbSubKeyword, $GUI_DISABLE)
+	  Else
+		 GUICtrlSetState($cmbKeyword, $GUI_ENABLE)
+		 GUICtrlSetState($cmbSubKeyword, $GUI_ENABLE)
+	  EndIf
+   Else
+	  GUICtrlSetState($addStepBtn, $GUI_DISABLE)
+	  GUICtrlSetState($cmbKeyword, $GUI_DISABLE)
+	  GUICtrlSetState($cmbSubKeyword, $GUI_DISABLE)
    EndIf
 
-   If $comboValue=='' Then
-	  GUICtrlSetState($addStepBtn, $GUI_DISABLE)
-   Else
-	  GUICtrlSetState($addStepBtn, $GUI_ENABLE)
-	  bindingDataToAgniKeywordCombobox()
-	  If $comboValue=='run_event' Or $comboValue=='run_keyword' Then
-		 $comboValue = $comboValue & '_'
-	  EndIf
-	  If $comboValue=='create_dictionary_and_get' Then
-		 $comboValue = 'get_'
-	  EndIf
-	  If $comboValue=='create_dictionary_and_check' Then
-		 $comboValue = 'verify_'
-	  EndIf
+
+EndFunc
+
+Func changeComboKeyword()
+   $comboValue = GUICtrlRead($cmbKeyword)
+   ConsoleWrite($comboValue)
+   If  StringInStr($comboValue, "--")>0 Then
+	   $comboValue = ""
+	   _GUICtrlComboBox_SetEditText($cmbKeyword, $comboValue)
    EndIf
-   GUICtrlSetData($txtKeyword, $comboValue)
+
+   If $comboValue <>'' Then
+	   bindingDataToAgniKeywordCombobox()
+   EndIf
 EndFunc
 
 Func bindingDataToAgniKeywordCombobox()
-   $comboValue = GUICtrlRead($idComboBox)
+   $comboValue = GUICtrlRead($cmbKeyword)
    If $comboValue=='run_event' Or $comboValue=='run_keyword' Then
-	  GUICtrlSetState($cmbAgniKeyword, $GUI_ENABLE)
+	  GUICtrlSetState($cmbSubKeyword, $GUI_ENABLE)
 	  If $comboValue=='run_event' Then
-		 GUICtrlSetData($cmbAgniKeyword, '')
-		 GUICtrlSetData($cmbAgniKeyword, json_get($object,'[run_event_keywords]'))
+		 GUICtrlSetData($cmbSubKeyword, '')
+		 GUICtrlSetData($cmbSubKeyword, json_get($object,'[run_event_keywords]'))
 	  EndIf
 	  If $comboValue=='run_keyword' Then
 		 ; get all keyword from agni
-		 GUICtrlSetData($cmbAgniKeyword, '')
+		 GUICtrlSetData($cmbSubKeyword, '')
 		 stringJoin($agni_keywors ,'|')
-		 GUICtrlSetData($cmbAgniKeyword, stringJoin($agni_keywors ,'|'))
+		 GUICtrlSetData($cmbSubKeyword, stringJoin($agni_keywors ,'|'))
 	  EndIf
    Else
-	  GUICtrlSetData($cmbAgniKeyword, '')
-	  GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
+	  GUICtrlSetData($cmbSubKeyword, '')
+	  GUICtrlSetState($cmbSubKeyword, $GUI_DISABLE)
    EndIf
 EndFunc
 
@@ -451,11 +464,14 @@ Func doGenerateSteps()
    If Not $validateMsg='' Then
 	  MsgBox($MB_ICONERROR, "", $validateMsg)
    Else
-	  Local $arrSteps='' ;[function#stepname#keyword, function#stepname#keyword]
+	  Local $arrSteps='' ;[stepname#keyword#subkeyword, stepname#keyword#subkeyword]
 	  For $x = 0 To _GUICtrlListView_GetItemCount($stepList) - 1
 		 $itemText = _GUICtrlListView_GetItemTextString($stepList,$x)
 		 $txtArr = StringSplit($itemText,'|')
 		 $obj = ''
+		 If StringInStr($common_step, $txtArr[2]) > 0 Then
+			$txtArr[3] = $txtArr[2]
+		 EndIf
 		 $obj = $obj & $txtArr[2] & '#' & $txtArr[3]
 		 If Not $txtArr[4]='' Then
 			$obj = $obj & '#' & $txtArr[4]
@@ -464,6 +480,7 @@ Func doGenerateSteps()
 	  Next
 
 	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
+	  ConsoleWrite($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  loadindProgess(500,"Generate testcase","Processing...")
 	  $filePath = @ScriptDir & '\output\'& $fileOfTestcase
@@ -559,20 +576,27 @@ Func addStepByListCommands($all_commands)
    _GUICtrlListView_DeleteAllItems($stepList)
    For $command In $all_commands
 	  $step_name = aliasNameByCharacter($command,'\s+|/|-|\|',"_")
-	  $funtion_stepname = 'run_keyword'
-	  $keyword = ''
-	  If getRegexPatten($command,'^show\s.*') Then
-		 $funtion_stepname = 'create_dictionary_and_check'
-		 $step_name = StringRegExpReplace($step_name,'^show_',"verify_")
+	  $keyword = 'run_keyword'
+	  $sub_keyword = ''
+	  $mk_command = StringRegExpReplace($step_name,'run_',"", 1)
+	  ; check if command already exist in common steps
+	  If StringInStr($common_step, $mk_command) Then
+		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $mk_command & "| | ", $stepList)
 	  Else
-		 If getRegexPatten($command,'^set\s.*') or getRegexPatten($command,'^commit\s.*') or getRegexPatten($command,'^delete\s.*') Then
-			$funtion_stepname = 'run_event'
-			$keyword = 'On CLI'
+		 If getRegexPatten($command,'^show\s.*') Then
+			$keyword = 'create_dictionary_and_check'
+			$step_name = StringRegExpReplace($step_name,'^show_',"verify_")
 		 Else
-			$funtion_stepname = 'run_keyword'
+			If getRegexPatten($command,'^set\s.*') or getRegexPatten($command,'^commit\s.*') or getRegexPatten($command,'^delete\s.*') Then
+			   $keyword = 'run_event'
+			   $sub_keyword = 'On CLI'
+			Else
+			   $keyword = 'run_keyword'
+			EndIf
 		 EndIf
+		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $step_name & "|" & $keyword&"|"&$sub_keyword, $stepList)
 	  EndIf
-	  GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $funtion_stepname & "|" & $step_name&"|"&$keyword, $stepList)
+
    Next
 EndFunc
 
@@ -703,28 +727,38 @@ Func _Edit_Changed($cCombo)
 EndFunc   ;==>_Edit_Changed
 
 Func WM_COMMAND($hWnd, $iMsg, $iwParam, $ilParam)
-
-    #forceref $hWnd, $iMsg, $ilParam
-
     $iIDFrom = BitAND($iwParam, 0xFFFF) ; Low Word
     $iCode = BitShift($iwParam, 16) ; Hi Word
     If $iCode = $CBN_EDITCHANGE Then
         Switch $iIDFrom
-            Case $cmbAgniKeyword
-                _Edit_Changed($cmbAgniKeyword)
-            ;Case $cCombo2
-                ;_Edit_Changed($cCombo2)
+            Case $cmbSubKeyword
+                _Edit_Changed($cmbSubKeyword)
+			Case $cmbNameOfStep
+				_Edit_Changed($cmbNameOfStep)
+			   Switch $iCode
+				   Case $CBN_EDITUPDATE, $CBN_EDITCHANGE ; when user types in new data
+					   ; _Combo_Changed()
+					   $ComboBox_NameOfStep_Changed = True
+				   Case $CBN_SELCHANGE ; item from drop down selected
+					   ;_Combo_Changed()
+					   $ComboBox_NameOfStep_Changed = True
+				   ;Case $CBN_KILLFOCUS
+					   ;_Combo_LostFocus()
+				   ;Case $CBN_SETFOCUS
+					   ;_Combo_GotFocus()
+			   EndSwitch
         EndSwitch
     EndIf
     Return $GUI_RUNDEFMSG
  EndFunc   ;==>WM_COMMAND
 #EndRegion
+
 #EndRegion
 Func duplicateStep()
    $listCount = _GUICtrlListView_GetItemCount($stepList)
    $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
    $currentArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $Selected+0),'|')
-   ; insert this value for new row
+   ; insert this value for new rown
    GUICtrlCreateListViewItem($listCount + 1 &"|"& $currentArr[2] & "|" & $currentArr[3]&"|"&$currentArr[4], $stepList)
 EndFunc
 Func initForm()
@@ -734,13 +768,13 @@ Func initForm()
    ; reset testcase name
    GUICtrlSetData($txtTestcaseName,'')
    ; reset combo common function step
-   GUICtrlSetData($idComboBox, '')
-   GUICtrlSetData($idComboBox, $common_step, '')
+   GUICtrlSetData($cmbKeyword, '')
+   GUICtrlSetData($cmbKeyword, $common_keyword, '')
    ; reset combo keyword
-   GUICtrlSetData($cmbAgniKeyword, '')
-   GUICtrlSetState($cmbAgniKeyword, $GUI_DISABLE)
-   ; reset textbox name of keyword
-   GUICtrlSetData($txtKeyword, '')
+   GUICtrlSetData($cmbSubKeyword, '')
+   GUICtrlSetState($cmbSubKeyword, $GUI_DISABLE)
+   ; reset combo name of keyword
+   GUICtrlSetData($cmbNameOfStep,$common_step , '')
    ; reset list Step
    _GUICtrlListView_DeleteAllItems($stepList)
    ; Set default add_timestamp

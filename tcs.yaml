@@ -55,7 +55,7 @@ Granular_tests:
                  1:
                      step_name:
                          run_keyword:
-                             keyword: '<<keyword>>'
+                             keyword: '<<sub-keyword>>'
                              return_variable_name: dh
                          unique_id: 1
                  #####
@@ -63,7 +63,7 @@ Granular_tests:
                  1:
                      step_name:
                          run_event: 
-                             keyword: '<<keyword>>'
+                             keyword: '<<sub-keyword>>'
                              device: device
                              command: # --> need to update 
                          unique_id: 1
@@ -187,5 +187,12 @@ Granular_tests:
                      step_name:
                          run_keyword:
                              keyword: '${status}   Reboot device    ${dh}   mode=cli   wait=180  all=True'
+                         unique_id: 1
+                #####
+                #show_log_messages@
+                1:   
+                     get_show_log_messages:
+                         run_keyword:
+                             keyword: '${response}    Execute Cli Command On Device    ${dh}    command=show log messages'
                          unique_id: 1
                 #####
