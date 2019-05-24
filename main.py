@@ -95,6 +95,7 @@ def detect_file(yaml_content, format_structure):
 
 
 def update_unique_ids_and_format(yaml_file=None, uid=1):
+  directory, filename = os.path.split(yaml_file)
   format_structure = {
     "Granular_tests:@None": 0,
     "common_variables:@None": 8,
@@ -121,7 +122,7 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
   format_structure = detect_file(yaml_content, format_structure);
   counter = int(uid)
   steps_counter = 1
-  fw = open(yaml_file, 'w')
+  fw = open('output/'+filename, 'w')
   i = 0
   contentToWrite = ''
   for line in yaml_content.split('\n'):

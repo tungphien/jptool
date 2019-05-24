@@ -19,8 +19,8 @@ Global $ComboBox_NameOfStep_Changed = False
 
 Opt("GUIOnEventMode", 1);
 #Region Loading
-loadindProgess(500,"Load Juniper Tool","Openning Program")
-Func loadindProgess($timeout, $title, $msg)
+loadingProgress(500,"Load Juniper Tool","Openning Program")
+Func loadingProgress($timeout, $title, $msg)
    ProgressOn($title, $msg, "0%"); Just to let more beautiful
    For $i = 10 To 100 Step 10
 	   Sleep(100)
@@ -415,7 +415,7 @@ Func refreshAgniKeyword()
    If Not json_get($object,'[agni_path]') = '' Then
 	  $cmd =$PYTHON_CMD &' main.py -r true'
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-	  loadindProgess(500,"Read new keywords from Agni folder","Reading...")
+	  loadingProgress(500,"Read new keywords from Agni folder","Reading...")
 	  RestartScript()
    Else
 	  MsgBox($MB_ICONERROR,"Error"," Please update your agni folder !")
@@ -482,7 +482,8 @@ Func doGenerateSteps()
 	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
 	  ConsoleWrite($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-	  loadindProgess(500,"Generate testcase","Processing...")
+	  loadingProgress(500,"Generate testcase","Processing...")
+
 	  $filePath = @ScriptDir & '\output\'& $fileOfTestcase
 	  GUICtrlSetData($outputHyperlink, $filePath)
 	  OpenFile($filePath)
@@ -497,12 +498,19 @@ Func doFormat()
 	   $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Do you want to FORMAT and RE-INDEX UNIQUE this file? " & @CRLF & $filePath)
 	   If  $answer = 6 Then ;If select OK
 		   Local $iPID = Run(@ComSpec & " /c " & $PYTHON_CMD &' main.py -f "' & $filePath &'"', "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-		   loadindProgess(500,"Format yaml file","Processing...")
+		   loadingProgress(500,"Format yaml file","Processing...")
+		   $filePath = @ScriptDir & '\output\'& getFileNameFromPath($filePath)
 		   GUICtrlSetData($outputHyperlink, $filePath)
 		   OpenFile($filePath)
 	   EndIf
 	EndIf
 
+EndFunc
+
+Func getFileNameFromPath($path)
+   Local $sDrive = "", $sDir = "", $sFileName = "", $sExtension = ""
+   Local $aPathSplit = _PathSplit($path, $sDrive, $sDir, $sFileName, $sExtension)
+   Return $aPathSplit[$PATH_FILENAME] & $aPathSplit[$PATH_EXTENSION]
 EndFunc
 
 Func browseYamlFile()
@@ -525,7 +533,7 @@ Func aliasNameByCharacter($str, $pattern, $character)
 EndFunc
 
 Func handleMTP($sPath)
-   loadindProgess(500,"Loading command from MTP file.","Reading...")
+   ;loadingProgress(500,"Loading command from MTP file.","Reading...")
    Local $oWord = _Word_Create()
    Local $oDoc = _Word_DocOpen($oWord, $sPath)
    Local $oRange = $oDoc.Range
@@ -574,30 +582,33 @@ EndFunc
 Func addStepByListCommands($all_commands)
    ; reset list Step
    _GUICtrlListView_DeleteAllItems($stepList)
-   For $command In $all_commands
-	  $step_name = aliasNameByCharacter($command,'\s+|/|-|\|',"_")
-	  $keyword = 'run_keyword'
-	  $sub_keyword = ''
-	  $mk_command = StringRegExpReplace($step_name,'run_',"", 1)
-	  ; check if command already exist in common steps
-	  If StringInStr($common_step, $mk_command) Then
-		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $mk_command & "| | ", $stepList)
-	  Else
-		 If getRegexPatten($command,'^show\s.*') Then
-			$keyword = 'create_dictionary_and_check'
-			$step_name = StringRegExpReplace($step_name,'^show_',"verify_")
+   If UBound($all_commands)<=0 Then
+	   MsgBox($MB_ICONERROR, "", "This MTP have no test log !")
+   Else
+	  For $command In $all_commands
+		 $step_name = aliasNameByCharacter($command,'\s+|/|-|\|',"_")
+		 $keyword = 'run_keyword'
+		 $sub_keyword = ''
+		 $mk_command = StringRegExpReplace($step_name,'run_',"", 1)
+		 ; check if command already exist in common steps
+		 If StringInStr($common_step, $mk_command) Then
+			GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $mk_command & "| | ", $stepList)
 		 Else
-			If getRegexPatten($command,'^set\s.*') or getRegexPatten($command,'^commit\s.*') or getRegexPatten($command,'^delete\s.*') Then
-			   $keyword = 'run_event'
-			   $sub_keyword = 'On CLI'
+			If getRegexPatten($command,'^show\s.*') Then
+			   $keyword = 'create_dictionary_and_check'
+			   $step_name = StringRegExpReplace($step_name,'^show_',"verify_")
 			Else
-			   $keyword = 'run_keyword'
+			   If getRegexPatten($command,'^set\s.*') or getRegexPatten($command,'^commit\s.*') or getRegexPatten($command,'^delete\s.*') Then
+				  $keyword = 'run_event'
+				  $sub_keyword = 'On CLI'
+			   Else
+				  $keyword = 'run_keyword'
+			   EndIf
 			EndIf
+			GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $step_name & "|" & $keyword&"|"&$sub_keyword, $stepList)
 		 EndIf
-		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $step_name & "|" & $keyword&"|"&$sub_keyword, $stepList)
-	  EndIf
-
-   Next
+	  Next
+   EndIf
 EndFunc
 
 Func displayBrowseFile($format)
@@ -672,7 +683,7 @@ Func OpenFile($file_path)
 	  if FileExists($notepad_path_64)==1 Then
 		 $editor = $notepad_path_64
 	  EndIf
-	  Run($editor & " " & $file_path)
+	  Run('"' & $editor  & '" "' & $file_path & '"')
    EndIf
 EndFunc
 
