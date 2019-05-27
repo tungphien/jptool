@@ -157,7 +157,8 @@ GUICtrlSetImage($refreshAgniKeywordBtn,"icons\refresh.ico",221,0)
 
 #Region Tab About
 GUICtrlCreateTabItem("About")
-Local $lblAbout = GUICtrlCreateLabel("", 10, 30, 600,480)
+Local $upgradeBtn = GUICtrlCreateButton("Upgrade", 10, 30,100,30)
+Local $lblAbout = GUICtrlCreateLabel("", 10, 70, 600,450)
 GUICtrlSetData($lblAbout,"Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
 #EndRegion
 
@@ -798,6 +799,12 @@ Func initForm()
    ; reset output path
    GUICtrlSetData($outputHyperlink, '')
    GUICtrlSetData($lblPythonVersionValue,$PYTHON_FULLTEXT_VERSION)
+   ; check upgrade button
+   If checkUpdate() = True Then
+	  GUICtrlSetState($upgradeBtn, $GUI_ENABLE)
+   Else
+	  GUICtrlSetState($upgradeBtn, $GUI_DISABLE)
+   EndIf
 EndFunc
 
 Func updateButtonStatus()
@@ -806,5 +813,34 @@ Func updateButtonStatus()
 	  GUICtrlSetState($duplicateBtn, $GUI_ENABLE)
    Else
 	  GUICtrlSetState($duplicateBtn, $GUI_DISABLE)
+   EndIf
+EndFunc
+
+Func checkUpdate()
+   $isNeedToUpdate = False
+   if FileExists('.git')==0 Then
+	  $pID = Run(@ComSpec & " /c " & "git init & git remote add origin https://github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+	  $isNeedToUpdate = True
+	  Return $isNeedToUpdate
+   EndIf
+
+   $pID = Run(@ComSpec & " /c " & "git fetch origin & git diff origin/master", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+   Local $consoleOutput = getOutputOfProcess($pID)
+   If StringInStr($consoleOutput, '---') or StringInStr($consoleOutput, '+++') Then
+	  ConsoleWrite('Has new update !')
+	  $isNeedToUpdate = True
+   Else
+	  ConsoleWrite('Nothing !')
+	  $isNeedToUpdate =False
+   EndIf
+   ConsoleWrite($consoleOutput)
+   Return $isNeedToUpdate
+EndFunc
+
+Func updateApp()
+   if checkUpdate()=True Then
+	  $pID = Run(@ComSpec & " /c " & " git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+	  Local $consoleOutput = getOutputOfProcess($pID)
+	  ConsoleWrite($consoleOutput)
    EndIf
 EndFunc
