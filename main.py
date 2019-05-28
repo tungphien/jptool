@@ -68,14 +68,6 @@ def detect_file(yaml_content, format_structure):
   index_stepname_list = re.findall('\n[\s]{0,}\d+:[\s]{0,}(.*)\n', yaml_content)
   for item in index_stepname_list:
     format_structure[item.strip() + '@None'] = 21
-  # detect sub step has operator
-  index_substep_operator_list = re.findall('(.*_operator:.*\n)', yaml_content)
-  for item in index_substep_operator_list:
-    format_structure[item.strip() + '@None'] = 29
-  # detect sub step has value
-  index_substep_value_list = re.findall('(.*_value:.*\n)', yaml_content)
-  for item in index_substep_value_list:
-    format_structure[item.strip() + '@None'] = 29
   # detect comment line
   format_structure = detectCommentLine(yaml_content, format_structure)
   # detect sub command of run_event, run_keyword, create_dictionary_and_get,..
