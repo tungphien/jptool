@@ -159,7 +159,7 @@ GUICtrlSetImage($refreshAgniKeywordBtn,"icons\refresh.ico",221,0)
 GUICtrlCreateTabItem("About")
 Local $upgradeBtn = GUICtrlCreateButton("Upgrade", 10, 30,100,30)
 Local $lblAbout = GUICtrlCreateLabel("", 10, 70, 600,450)
-GUICtrlSetData($lblAbout,"Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
+GUICtrlSetData($lblAbout,"Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF &"- install git."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
 #EndRegion
 
 GUICtrlCreateTabItem("") ; end tabitem definition
@@ -180,6 +180,7 @@ Local $hDelKey = GUICtrlCreateDummy()
 Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
 #EndRegion
+GUICtrlSetOnEvent($upgradeBtn, 'updateApp')
 GUICtrlSetOnEvent($duplicateBtn,'duplicateStep')
 GUICtrlSetOnEvent($reloadBtn,'initForm')
 GUICtrlSetOnEvent($refreshAgniKeywordBtn,'refreshAgniKeyword')
@@ -716,9 +717,6 @@ Func getRegexPatten($content, $patten)
    Return $result
 EndFunc
 
-Func displayHelp()
-   MsgBox(0, "About Jtool!", "Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
-EndFunc
 
 Func RestartScript()
     If @Compiled = 1 Then
@@ -827,20 +825,26 @@ Func checkUpdate()
    $pID = Run(@ComSpec & " /c " & "git fetch origin & git diff origin/master", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
    Local $consoleOutput = getOutputOfProcess($pID)
    If StringInStr($consoleOutput, '---') or StringInStr($consoleOutput, '+++') Then
-	  ConsoleWrite('Has new update !')
+	  WriteLog('Has new update !')
 	  $isNeedToUpdate = True
    Else
-	  ConsoleWrite('Nothing !')
+	  WriteLog('Nothing !')
 	  $isNeedToUpdate =False
    EndIf
-   ConsoleWrite($consoleOutput)
+   WriteLog($consoleOutput)
    Return $isNeedToUpdate
 EndFunc
 
 Func updateApp()
-   if checkUpdate()=True Then
-	  $pID = Run(@ComSpec & " /c " & " git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+   $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Do you want to install upgrade?")
+   If  $answer = 6 Then ;If select OK
+	  $pID = Run(@ComSpec & " /c " & "git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  Local $consoleOutput = getOutputOfProcess($pID)
-	  ConsoleWrite($consoleOutput)
+	  WriteLog($consoleOutput)
+	  RestartScript()
    EndIf
+EndFunc
+
+Func WriteLog($content)
+   _FileWriteLog(@ScriptDir & '\app.log', $content)
 EndFunc
