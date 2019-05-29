@@ -140,7 +140,10 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
     else:
       if line_content + '@' + str(i) in format_structure.keys():
         line = ' ' * format_structure[line_content + '@' + str(i)] + line_content
-    contentToWrite = contentToWrite + line + '\n'
+
+    # remove blank line except empty line at index 2
+    if i<=2 or line.strip() != '':
+      contentToWrite = contentToWrite + line + '\n'
   fw.write(contentToWrite.strip())
   fw.close()
 
