@@ -84,6 +84,20 @@ def detect_file(yaml_content, format_structure):
   return format_structure
 
 
+def addBlankLine(yaml_content):
+  contentToWrite = ''
+  i=0
+  for line in yaml_content.split('\n'):
+    i=i+1
+    if i==2:
+      contentToWrite = contentToWrite + '\n' + line + '\n'
+    else:
+      if line.strip().startswith("#"): # detect comment line
+        contentToWrite = contentToWrite + '\n\n' + line + '\n'
+      else:
+        contentToWrite = contentToWrite + line + '\n'
+
+  return  contentToWrite
 
 
 def update_unique_ids_and_format(yaml_file=None, uid=1):
@@ -141,9 +155,10 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
       if line_content + '@' + str(i) in format_structure.keys():
         line = ' ' * format_structure[line_content + '@' + str(i)] + line_content
 
-    # remove blank line except empty line at index 2
-    if i<=2 or line.strip() != '':
+    if line!='':
       contentToWrite = contentToWrite + line + '\n'
+
+  contentToWrite = addBlankLine(contentToWrite)
   fw.write(contentToWrite.strip())
   fw.close()
 
