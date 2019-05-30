@@ -87,6 +87,7 @@ def detect_file(yaml_content, format_structure):
 def addBlankLine(yaml_content):
   contentToWrite = ''
   i=0
+  found_comment = False
   for line in yaml_content.split('\n'):
     i=i+1
     if i==2:
@@ -94,8 +95,16 @@ def addBlankLine(yaml_content):
     else:
       if line.strip().startswith("#"): # detect comment line
         contentToWrite = contentToWrite + '\n\n' + line + '\n'
+        found_comment = True
+        continue
       else:
-        contentToWrite = contentToWrite + line + '\n'
+        # detect testcase name
+        pattern = r'^\s{4}[\w|\d]'
+        if found_comment==False and re.match(pattern, line):
+          contentToWrite = contentToWrite + '\n\n' + line + '\n'
+        else:
+          contentToWrite = contentToWrite + line + '\n'
+          found_comment = False
 
   return  contentToWrite
 
