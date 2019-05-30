@@ -584,6 +584,8 @@ EndFunc
 Func addStepByListCommands($all_commands)
    ; reset list Step
    _GUICtrlListView_DeleteAllItems($stepList)
+   ; set default value
+   GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
    If UBound($all_commands)<=0 Then
 	   MsgBox($MB_ICONERROR, "", "This MTP have no test log !")
    Else
