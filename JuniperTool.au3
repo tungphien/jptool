@@ -158,6 +158,8 @@ GUICtrlSetImage($refreshAgniKeywordBtn,"icons\refresh.ico",221,0)
 #Region Tab About
 GUICtrlCreateTabItem("About")
 Local $upgradeBtn = GUICtrlCreateButton("Upgrade", 10, 30,100,30)
+Local $msgUpgradeTxt = GUICtrlCreateLabel("", 120, 40,400,30)
+GUICtrlSetColor ($msgUpgradeTxt, $COLOR_RED )
 Local $lblAbout = GUICtrlCreateLabel("", 10, 70, 600,450)
 GUICtrlSetData($lblAbout,"Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF &"- install git."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
 #EndRegion
@@ -828,9 +830,11 @@ Func checkUpdate()
    Local $consoleOutput = getOutputOfProcess($pID)
    If StringInStr($consoleOutput, '---') or StringInStr($consoleOutput, '+++') Then
 	  WriteLog('Has new update !')
+	  GUICtrlSetData($msgUpgradeTxt, 'Have new version for this, Please click upgrade button !')
 	  $isNeedToUpdate = True
    Else
 	  WriteLog('Nothing !')
+	  GUICtrlSetData($msgUpgradeTxt, '')
 	  $isNeedToUpdate =False
    EndIf
    WriteLog($consoleOutput)
