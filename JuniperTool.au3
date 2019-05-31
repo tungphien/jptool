@@ -826,24 +826,26 @@ Func checkUpdate()
 	  Return $isNeedToUpdate
    EndIf
 
-   $pID = Run(@ComSpec & " /c " & "git fetch origin & git diff origin/master", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-   Local $consoleOutput = getOutputOfProcess($pID)
-   If StringInStr($consoleOutput, '---') or StringInStr($consoleOutput, '+++') Then
-	  WriteLog('Has new update !')
-	  GUICtrlSetData($msgUpgradeTxt, 'Have new version for this, Please click upgrade button !')
-	  $isNeedToUpdate = True
-   Else
-	  WriteLog('Nothing !')
-	  GUICtrlSetData($msgUpgradeTxt, '')
-	  $isNeedToUpdate =False
-   EndIf
-   WriteLog($consoleOutput)
-   Return $isNeedToUpdate
+   ;$pID = Run(@ComSpec & " /c " & "git fetch origin & git diff origin/master", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+   ;Local $consoleOutput = getOutputOfProcess($pID)
+   ;WriteLog($consoleOutput)
+   ;If StringInStr($consoleOutput, '---') or StringInStr($consoleOutput, '+++') Then
+	;  WriteLog('Has new update !')
+	 ; GUICtrlSetData($msgUpgradeTxt, 'Have new version for this, Please click upgrade button !')
+	;  $isNeedToUpdate = True
+  ; Else
+	 ; WriteLog('Nothing !')
+	;  GUICtrlSetData($msgUpgradeTxt, '')
+	;  $isNeedToUpdate =False
+  ; EndIf
+   Return True
+
 EndFunc
 
 Func updateApp()
    $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Do you want to install upgrade?")
    If  $answer = 6 Then ;If select OK
+	  loadingProgress(200,"Upgrade the Tool","Upgrading...")
 	  $pID = Run(@ComSpec & " /c " & "git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  Local $consoleOutput = getOutputOfProcess($pID)
 	  WriteLog($consoleOutput)
