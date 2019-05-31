@@ -9,4 +9,4 @@ for yaml_file in arrYamlFiles:
   print(yaml_file)
   with open(yaml_file, 'r') as fr:
     yaml_content = fr.read()
-    print(yaml_content)
+    print yaml_content
