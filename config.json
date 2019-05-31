@@ -2,5 +2,5 @@
   "agni_path":"D:\\PhienNT\\Juniper\\agni",
   "run_event_keywords":"On CLI|On Config",
   "testcase_filename":"routing_interfaces.yaml@1|routing_mpls.yaml@5000|routing_platform.yaml@10000|routing_protocols.yaml@15000|dc_ethernet_switching.yaml@20000|dc_interfaces.yaml@25000|dc_management.yaml@30000|dc_protocols.yaml@35000|dc_security.yaml@40000|dc_virtualchassis.yaml@45000|platform_fusion.yaml@50000|security_interface.yaml@55000|platform.yaml@60000|security_platform.yaml@65000|security_ipsec.yaml@70000|security_firewall.yaml@75000|cos.yaml@95000",
-  "users":"nhuu|dnguyenvan|tnguyenngoc|hphantrung"
+  "users":"nhuu|dnguyenvan|tnguyenngoc|hphantrung|bb"
 }
