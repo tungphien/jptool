@@ -1,6 +1,4 @@
 #include <Array.au3>
 #include <File.au3>
 
-Local $sDrive = "", $sDir = "", $sFileName = "", $sExtension = ""
-Local $aPathSplit = _PathSplit("C:\Users\phien.ngo\Downloads\routing_protocols - Copy.yaml", $sDrive, $sDir, $sFileName, $sExtension)
-_ArrayDisplay($aPathSplit, "_PathSplit of " & @ScriptFullPath)
+Run(@ComSpec & " /c " & 'echo *.log\ntcs.yaml\nconfig.json > .gitignore', "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
