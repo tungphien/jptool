@@ -196,3 +196,36 @@ Granular_tests:
                              keyword: '${response}    Execute Cli Command On Device    ${dh}    command=show log messages'
                          unique_id: 1
                 #####
+                #no_core_dumps@            
+                 1:
+                     create_core_path_list:
+                         run_keyword:
+                             keyword: '${core_path}=    Create List    /tftpboot/corefiles/*core    /var/jails/rest-api/tmp/*core    /var/crash/kernel.    /var/tmp/pics/*core    /var/tmp/*core*    /var/crash/*core*'
+                         unique_id: 1
+                 1:
+                     get_system_core_dumps:
+                         run_keyword:
+                             keyword: '${core_status_list}=    Detect Core On Junos Device  core_path=${core_path}  resource=${device}'
+                         unique_id: 1
+                 1:
+                     verify_system_core_dumps:
+                         run_keyword:
+                             loop_over_list:
+                                       - core_status_list
+                             keyword: 'Should Not Be True    ${core_status}'
+                         unique_id: 1
+                #####
+                #cpu_ultilization@
+                 1:
+                     verify_cpu_utilization:
+                         run_keyword:
+                             keyword: 'check cpu usage  device=${device}'
+                         unique_id: 1
+                #####
+                #traffic_is_restored@
+                 1:
+                     verify_ixia_traffic_stats:
+                         clear_and_check_traffic_stats:
+                             devices: device
+                         unique_id: 1
+                #####

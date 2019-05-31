@@ -93,14 +93,15 @@ def addBlankLine(yaml_content):
     if i==2:
       contentToWrite = contentToWrite + '\n' + line + '\n'
     else:
-      if line.strip().startswith("#"): # detect comment line
+      comment_pattern = r'^\s{4}[\#]'
+      if re.match(comment_pattern, line): # detect comment line
         contentToWrite = contentToWrite + '\n\n' + line + '\n'
         found_comment = True
         continue
       else:
         # detect testcase name
-        pattern = r'^\s{4}[\w|\d]'
-        if found_comment==False and re.match(pattern, line):
+        step_pattern = r'^\s{4}[\w|\d]'
+        if found_comment==False and re.match(step_pattern, line):
           contentToWrite = contentToWrite + '\n\n' + line + '\n'
         else:
           contentToWrite = contentToWrite + line + '\n'
@@ -164,7 +165,7 @@ def update_unique_ids_and_format(yaml_file=None, uid=1):
       if line_content + '@' + str(i) in format_structure.keys():
         line = ' ' * format_structure[line_content + '@' + str(i)] + line_content
 
-    if line!='':
+    if line.strip()!='':
       contentToWrite = contentToWrite + line + '\n'
 
   contentToWrite = addBlankLine(contentToWrite)
