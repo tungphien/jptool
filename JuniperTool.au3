@@ -831,11 +831,12 @@ Func checkUpdate()
    $pID = Run(@ComSpec & " /c " & "git fetch origin & git log origin/master -p -1", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
    Local $consoleOutput = getOutputOfProcess($pID)
    WriteLog($consoleOutput)
-   $commit_id = getRegexPatten($consoleOutput,'commit\s(.*)')
-   $commit_file = $commit_id &'.log'
+   $commit_id = getRegexPatten($consoleOutput,'commit\s*(.*)\n*Author')
+   WriteLog($commit_id)
+   $commit_file = 'commit-'& $commit_id &'.log'
    if FileExists($commit_file)==0 Then
-	  $isNeedToUpdate = True
 	  $COMMIT_FILE = $commit_file
+	  $isNeedToUpdate = True
    Else
 	  $isNeedToUpdate =False
    EndIf
@@ -851,6 +852,10 @@ Func updateApp()
 	  $pID = Run(@ComSpec & " /c " & "git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  Local $consoleOutput = getOutputOfProcess($pID)
 	  loadingProgress(2000,"Upgrade the Tool","Upgrading...")
+	  Local $prevCommitFiles = _FileListToArray(@ScriptDir, "commit-*.log")
+	  For $i = 0 To UBound($prevCommitFiles) - 1
+		 FileDelete($prevCommitFiles[$i])
+	  Next
 	  WriteLog('', $COMMIT_FILE)
 	  FileSetAttrib($COMMIT_FILE,"+H")
 	  RestartScript()
