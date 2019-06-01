@@ -1,0 +1,36 @@
+---
+
+Granular_tests:
+
+    # Owner: nhuu
+    name_of_testcase:
+        common_variables:
+                 device: device
+        steps:
+                 1:
+                     add_timestamp:
+                         run_event:
+                             keyword: On CLI
+                             device: device
+                             command: 'set cli timestamp'
+                         unique_id: 65000
+                 2:
+                     run_keyword_:
+                         run_keyword:
+                             keyword: 'Generate A Command Set With 5000 Address Book Objects To A Specific File    generated_file_path=/var/tmp/5000_address_book_objects.txt'
+                         unique_id: 65001
+                 3:
+                     run_keyword_:
+                         run_keyword:
+                             keyword: 'get address family from nlri_type_session'
+                         unique_id: 65002
+                 4:
+                     run_keyword_:
+                         run_keyword:
+                             keyword: '${interface_list}    Get all the ethernet interfaces     device=${device}'
+                         unique_id: 65003
+                 5:
+                     execute_ssh_on_shell_server:
+                         run_keyword:
+                             keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
+                         unique_id: 65004

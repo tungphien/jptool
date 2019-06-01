@@ -804,7 +804,9 @@ Func initForm()
    ; check upgrade button
    If checkUpdate() = True Then
 	  GUICtrlSetState($upgradeBtn, $GUI_ENABLE)
+	  GUICtrlSetData($msgUpgradeTxt, "Have new update for this tool. Please click Upgrade button")
    Else
+	  GUICtrlSetData($msgUpgradeTxt, "")
 	  GUICtrlSetState($upgradeBtn, $GUI_DISABLE)
    EndIf
 EndFunc
@@ -818,6 +820,7 @@ Func updateButtonStatus()
    EndIf
 EndFunc
 
+$COMMIT_FILE=''
 Func checkUpdate()
    $isNeedToUpdate = False
    if FileExists('.git')==0 Then
@@ -826,19 +829,19 @@ Func checkUpdate()
 	  Return $isNeedToUpdate
    EndIf
 
-   ;$pID = Run(@ComSpec & " /c " & "git fetch origin & git diff origin/master", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-   ;Local $consoleOutput = getOutputOfProcess($pID)
-   ;WriteLog($consoleOutput)
-   ;If StringInStr($consoleOutput, '---') or StringInStr($consoleOutput, '+++') Then
-	;  WriteLog('Has new update !')
-	 ; GUICtrlSetData($msgUpgradeTxt, 'Have new version for this, Please click upgrade button !')
-	;  $isNeedToUpdate = True
-  ; Else
-	 ; WriteLog('Nothing !')
-	;  GUICtrlSetData($msgUpgradeTxt, '')
-	;  $isNeedToUpdate =False
-  ; EndIf
-   Return True
+   $pID = Run(@ComSpec & " /c " & "git fetch origin & git log origin/master -p -1", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+   Local $consoleOutput = getOutputOfProcess($pID)
+   WriteLog($consoleOutput)
+   $commit_id = getRegexPatten($consoleOutput,'commit\s(.*)')
+   $commit_file = $commit_id &'.log'
+   if FileExists($commit_file)==0 Then
+	  $isNeedToUpdate = True
+	  $COMMIT_FILE = $commit_file
+   Else
+	  $isNeedToUpdate =False
+   EndIf
+
+   Return $isNeedToUpdate
 
 EndFunc
 
@@ -850,10 +853,11 @@ Func updateApp()
 	  Local $consoleOutput = getOutputOfProcess($pID)
 	  WriteLog($consoleOutput)
 	  loadingProgress(2000,"Upgrade the Tool","Upgrading...")
+	  WriteLog('', $COMMIT_FILE)
 	  RestartScript()
    EndIf
 EndFunc
 
-Func WriteLog($content)
-   _FileWriteLog(@ScriptDir & '\app.log', $content)
+Func WriteLog($content, $fileName='app')
+   _FileWriteLog(@ScriptDir & '\'& $fileName &'.log', $content)
 EndFunc
