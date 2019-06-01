@@ -828,14 +828,18 @@ Func checkUpdate()
 	  Return $isNeedToUpdate
    EndIf
 
-   $pID = Run(@ComSpec & " /c " & "git fetch origin & git log origin/master -p -1", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+   $pID = Run(@ComSpec & " /c " & "git fetch origin", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+   Local $consoleOutput = getOutputOfProcess($pID)
+   WriteLog($consoleOutput)
+   WriteLog('==================')
+   $pID = Run(@ComSpec & " /c " & "git log origin/master -p -1", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
    Local $consoleOutput = getOutputOfProcess($pID)
    WriteLog($consoleOutput)
    $commit_id = getRegexPatten($consoleOutput,'commit\s*(.*)\n*Author')
-   WriteLog($commit_id)
-   $commit_file = 'commit-'& $commit_id &'.log'
-   if FileExists($commit_file)==0 Then
-	  $COMMIT_FILE = $commit_file
+   ;WriteLog('@@@@:' & $commit_id)
+   $commit_file_name = 'commit-'& $commit_id &'.log'
+   if FileExists($commit_file_name)==0 Then
+	  $COMMIT_FILE = $commit_file_name
 	  $isNeedToUpdate = True
    Else
 	  $isNeedToUpdate =False
@@ -850,7 +854,6 @@ Func updateApp()
    If  $answer = 6 Then ;If select OK
 	  loadingProgress(200,"Upgrade the Tool","Upgrading...")
 	  $pID = Run(@ComSpec & " /c " & "git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-	  Local $consoleOutput = getOutputOfProcess($pID)
 	  loadingProgress(2000,"Upgrade the Tool","Upgrading...")
 	  Local $prevCommitFiles = _FileListToArray(@ScriptDir, "commit-*.log")
 	  For $i = 0 To UBound($prevCommitFiles) - 1
