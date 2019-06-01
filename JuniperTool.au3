@@ -16,7 +16,7 @@
 #include <Word.au3>
 
 Global $ComboBox_NameOfStep_Changed = False
-
+Global $COMMIT_FILE=''
 Opt("GUIOnEventMode", 1);
 #Region Loading
 loadingProgress(500,"Load Juniper Tool","Openning Program")
@@ -820,7 +820,6 @@ Func updateButtonStatus()
    EndIf
 EndFunc
 
-$COMMIT_FILE=''
 Func checkUpdate()
    $isNeedToUpdate = False
    if FileExists('.git')==0 Then
@@ -851,13 +850,13 @@ Func updateApp()
 	  loadingProgress(200,"Upgrade the Tool","Upgrading...")
 	  $pID = Run(@ComSpec & " /c " & "git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  Local $consoleOutput = getOutputOfProcess($pID)
-	  WriteLog($consoleOutput)
 	  loadingProgress(2000,"Upgrade the Tool","Upgrading...")
 	  WriteLog('', $COMMIT_FILE)
+	  FileSetAttrib($COMMIT_FILE,"+H")
 	  RestartScript()
    EndIf
 EndFunc
 
-Func WriteLog($content, $fileName='app')
-   _FileWriteLog(@ScriptDir & '\'& $fileName &'.log', $content)
+Func WriteLog($content, $fileName='app.log')
+   _FileWriteLog(@ScriptDir & '\'& $fileName, $content)
 EndFunc
