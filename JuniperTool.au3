@@ -854,14 +854,13 @@ Func updateApp()
    If  $answer = 6 Then ;If select OK
 	  GUISetState(@SW_HIDE, $hGUI)
 	  loadingProgress(300,"Upgrade the Tool","Upgrading...")
-	  $pID = Run(@ComSpec & " /c " & "git reset --hard origin/master", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  Local $prevCommitFiles = _FileListToArray(@ScriptDir, "commit-*.log")
 	  For $i = 0 To UBound($prevCommitFiles) - 1
 		 FileDelete($prevCommitFiles[$i])
 	  Next
 	  WriteLog('', $COMMIT_FILE)
 	  FileSetAttrib($COMMIT_FILE,"+H")
-	  $pID = Run(@ComSpec & " /c " & "git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+	  Run("updater.exe", "")
 	  _Close()
    EndIf
 EndFunc
