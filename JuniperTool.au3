@@ -852,16 +852,17 @@ EndFunc
 Func updateApp()
    $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Do you want to install upgrade?")
    If  $answer = 6 Then ;If select OK
-	  loadingProgress(200,"Upgrade the Tool","Upgrading...")
-	  $pID = Run(@ComSpec & " /c " & "git fetch --all &  git reset --hard origin/master & git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-	  loadingProgress(2000,"Upgrade the Tool","Upgrading...")
+	  GUISetState(@SW_HIDE, $hGUI)
+	  loadingProgress(300,"Upgrade the Tool","Upgrading...")
+	  $pID = Run(@ComSpec & " /c " & "git reset --hard origin/master", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  Local $prevCommitFiles = _FileListToArray(@ScriptDir, "commit-*.log")
 	  For $i = 0 To UBound($prevCommitFiles) - 1
 		 FileDelete($prevCommitFiles[$i])
 	  Next
 	  WriteLog('', $COMMIT_FILE)
 	  FileSetAttrib($COMMIT_FILE,"+H")
-	  RestartScript()
+	  $pID = Run(@ComSpec & " /c " & "git pull https://tungphien:f4715c5b44ec0c14cda116cf7effb7fd568315ed@github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+	  _Close()
    EndIf
 EndFunc
 
