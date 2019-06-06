@@ -484,7 +484,7 @@ Func doGenerateSteps()
 	  Next
 
 	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
-	  ConsoleWrite($cmd)
+	  WriteLog($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 	  loadingProgress(500,"Generate testcase","Processing...")
 
@@ -501,7 +501,9 @@ Func doFormat()
 	Else
 	   $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Do you want to FORMAT and RE-INDEX UNIQUE this file? " & @CRLF & $filePath)
 	   If  $answer = 6 Then ;If select OK
-		   Local $iPID = Run(@ComSpec & " /c " & $PYTHON_CMD &' main.py -f "' & $filePath &'"', "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+		   $cmd = $PYTHON_CMD & ' main.py -f "' & $filePath & '"'
+		   WriteLog($cmd)
+		   Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
 		   loadingProgress(500,"Format yaml file","Processing...")
 		   $filePath = @ScriptDir & '\output\'& getFileNameFromPath($filePath)
 		   GUICtrlSetData($outputHyperlink, $filePath)
@@ -830,13 +832,14 @@ Func checkUpdate()
 
    $pID = Run(@ComSpec & " /c " & "git fetch origin", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
    Local $consoleOutput = getOutputOfProcess($pID)
+   Sleep(500)
    WriteLog($consoleOutput)
    WriteLog('==================')
    $pID = Run(@ComSpec & " /c " & "git log origin/master -p -1", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
+   Sleep(500)
    Local $consoleOutput = getOutputOfProcess($pID)
    WriteLog($consoleOutput)
    $commit_id = getRegexPatten($consoleOutput,'commit\s*(.*)\n*Author')
-   ;WriteLog('@@@@:' & $commit_id)
    $commit_file_name = 'commit-'& $commit_id &'.log'
    if FileExists($commit_file_name)==0 Then
 	  $COMMIT_FILE = $commit_file_name
