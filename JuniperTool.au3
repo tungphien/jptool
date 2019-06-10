@@ -15,6 +15,7 @@
 #include <GuiComboBox.au3>
 #include <Word.au3>
 
+Global $version = 'Version: 2.6'
 Global $ComboBox_NameOfStep_Changed = False
 Global $COMMIT_FILE=''
 Opt("GUIOnEventMode", 1);
@@ -167,9 +168,10 @@ GUICtrlSetData($lblAbout,"Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& 
 
 GUICtrlCreateTabItem("") ; end tabitem definition
 
-Local $lblPythonVersionValue = GUICtrlCreateLabel("", 530, 570, 100,30)
 Local $lblUserName = GUICtrlCreateLabel("", 10, 570, 200,30)
 GUICtrlSetColor ($lblUserName, $COLOR_RED )
+Local $lblPythonVersionValue = GUICtrlCreateLabel("", 260, 570, 100,30)
+GUICtrlCreateLabel($version, 530, 570, 100,30)
 
 GUICtrlCreateGroup("Output path", 10, 500, 580, 50)
 Local $outputHyperlink = GUICtrlCreateInput("", 20, 520, 560, 20, BitOR($GUI_SS_DEFAULT_INPUT, $ES_READONLY))
