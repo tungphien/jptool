@@ -44,6 +44,7 @@ GUISetState(@SW_SHOW)
 GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
 GUICtrlSetOnEvent($ButtonCancel, "_Close")
 GUICtrlSetOnEvent($ButtonOk, "_Login")
+Global $userNameValue = ''
 #Region Enter Key to Login
 Local $hEnterKey = GUICtrlCreateDummy()
 Dim $EnterKeys[1][2]=[["{ENTER}", $hEnterKey]]
@@ -201,7 +202,6 @@ GUICtrlSetOnEvent($upBtn, "moveUpStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
 GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
 GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
-Local $userNameValue = ''
 
 While True
 	;Sleep(200)
@@ -482,7 +482,6 @@ Func doGenerateSteps()
 		 EndIf
 		 $arrSteps = $arrSteps & ' "' & $obj & '"'
 	  Next
-
 	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
 	  WriteLog($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
