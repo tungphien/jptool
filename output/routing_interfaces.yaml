@@ -1,0 +1,24 @@
+---
+
+Granular_tests:
+
+
+    # Owner: nhuu
+    aaa:
+        common_variables:
+                 device: device
+        steps:
+                 1:
+                     add_timestamp:
+                         run_event:
+                             keyword: On CLI
+                             device: device
+                             command: 'set cli timestamp'
+                         unique_id: 1
+                 2:
+                     hello:
+                         run_event:
+                             keyword: 'On CLI'
+                             device: device
+                             command: # --> need to update
+                         unique_id: 2

@@ -17,6 +17,7 @@
 
 Global $version = 'Version: 2.6'
 Global $ComboBox_NameOfStep_Changed = False
+Global $indexStepUpdate = Null
 Global $COMMIT_FILE=''
 Opt("GUIOnEventMode", 1);
 #Region Loading
@@ -106,11 +107,19 @@ Next
 #EndRegion
 
 Local $cmbNameOfStep = GUICtrlCreateCombo("Name of step", 10, 110, 440, 21, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+GUICtrlSetTip(-1, "Name of step", 'Information', $TIP_INFOICON)
 Local $cmbKeyword = GUICtrlCreateCombo("", 10, 140,200,21, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+GUICtrlSetTip(-1, "Select a Keyword", 'Information', $TIP_INFOICON)
 Local $cmbSubKeyword = GUICtrlCreateCombo("", 220, 140, 230,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
+GUICtrlSetTip(-1, "Select a Sub-Keyword", 'Information', $TIP_INFOICON)
+
 
 Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,130,50)
 GUICtrlSetImage($addStepBtn,"icons\add.ico",221,0)
+Local $updateStepBtn = GUICtrlCreateButton("Update", 460, 110,130,50)
+GUICtrlSetImage($updateStepBtn,"icons\update.ico",221,0)
+
+
 Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 170,60,40)
 GUICtrlSetImage($deleteStepBtn,"icons\delete.ico",221,0)
 Local $downBtn = GUICtrlCreateButton("Down", 530, 270,60,40)
@@ -118,6 +127,7 @@ GUICtrlSetImage($downBtn,"icons\down.ico",221,0)
 Local $upBtn = GUICtrlCreateButton("Up", 530, 220,60,40)
 GUICtrlSetImage($upBtn,"icons\up.ico",221,0)
 Local $duplicateBtn = GUICtrlCreateButton("Copy", 530, 320,60,40)
+
 GUICtrlSetImage($duplicateBtn,"icons\duplicate.ico",221,0)
 Local $reloadBtn = GUICtrlCreateButton("Reload", 530, 370,60,40)
 GUICtrlSetImage($reloadBtn,"icons\reload.ico",221,0)
@@ -195,6 +205,7 @@ GUICtrlSetOnEvent($browseAgniPathBtn, "displayBrowseFolder")
 GUICtrlSetOnEvent($formatFileBtn, "doFormat")
 GUICtrlSetOnEvent($generateStepBtn, "doGenerateSteps")
 GUICtrlSetOnEvent($addStepBtn, "addStep")
+GUICtrlSetOnEvent($updateStepBtn,"updateStep")
 GUICtrlSetOnEvent($deleteStepBtn, "deleteStep")
 GUICtrlSetOnEvent($hDelKey, "deleteStep")
 GUICtrlSetOnEvent($cmbKeyword, "changeComboKeyword")
@@ -204,6 +215,7 @@ GUICtrlSetOnEvent($upBtn, "moveUpStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
 GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
 GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
+GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
 
 While True
 	;Sleep(200)
@@ -330,8 +342,8 @@ Func addStep()
    $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
    $cmbKeywordValue = GUICtrlRead($cmbKeyword)
    $cmbSubKeywordValue = GUICtrlRead($cmbSubKeyword)
-   If $cmbNameOfStepValue='' Or StringInStr($cmbNameOfStepValue,' ') Then
-	  MsgBox($MB_ICONERROR, "", "Invalid name of step !")
+   If $cmbNameOfStepValue='' Or StringInStr($cmbNameOfStepValue,' ') Or (StringInStr($common_step,$cmbNameOfStepValue) <= 0 And $cmbKeywordValue = '') Then
+	  MsgBox($MB_ICONERROR, "", "Invalid name of step ! Step must be have Keyword !")
    Else
 	  If StringInStr($common_step,$cmbNameOfStepValue) > 0 Then
 		 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|"& $cmbNameOfStepValue & "| | ", $stepList)
@@ -341,6 +353,26 @@ Func addStep()
    EndIf
    updateIndexNumber()
    updateButtonStatus()
+EndFunc
+
+Func updateStep()
+   If $indexStepUpdate<>Null Then
+	  $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
+	  $cmbKeywordValue = GUICtrlRead($cmbKeyword)
+	  $cmbSubKeywordValue = GUICtrlRead($cmbSubKeyword)
+
+	  _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbNameOfStepValue , 1)
+	  If StringInStr($common_step,$cmbNameOfStepValue) > 0 Then
+		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbNameOfStepValue , 2)
+	  Else
+		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbKeywordValue , 2)
+	  EndIf
+	  _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbSubKeywordValue, 3)
+	  ;set state for button add and update
+	  GUICtrlSetState($updateStepBtn, $GUI_HIDE)
+	  GUICtrlSetState($addStepBtn, $GUI_SHOW)
+	  $indexStepUpdate = Null
+   EndIf
 EndFunc
 
 Func deleteStep()
@@ -770,6 +802,47 @@ Func WM_COMMAND($hWnd, $iMsg, $iwParam, $ilParam)
  EndFunc   ;==>WM_COMMAND
 #EndRegion
 
+; This works with either type of ListView
+Func WM_NOTIFY($hWnd, $iMsg, $wParam, $lParam)
+
+    #forceref $hWnd, $iMsg, $wParam
+
+    Local $hWndFrom, $iIDFrom, $iCode, $tNMHDR
+
+    $tNMHDR = DllStructCreate("hwnd;uint_ptr;int_ptr;int;int", $lParam)
+    $hWndFrom = HWnd(DllStructGetData($tNMHDR, 1))
+    $iCode = DllStructGetData($tNMHDR, 3)
+
+    $hWndListView = $stepList
+    If Not IsHWnd($stepList) Then $hWndListView = GUICtrlGetHandle($stepList)
+
+    Switch $hWndFrom
+        Case $hWndListView
+            Switch $iCode
+			   Case $NM_DBLCLK
+				  $selected_row = DllStructGetData($tNMHDR, 4)
+				  $selected_col = DllStructGetData($tNMHDR, 5)
+				  $currentArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $selected_row),'|')
+				  If $currentArr[2]<>'' Then
+					 $indexStepUpdate = $selected_row
+					 ;binding data to the input when double click
+					 _GUICtrlComboBox_SetEditText ( $cmbNameOfStep, $currentArr[2])
+					 If StringInStr($common_step, $currentArr[2]) > 0 Then
+						_GUICtrlComboBox_SetEditText ( $cmbKeyword, '')
+					 Else
+						_GUICtrlComboBox_SetEditText ( $cmbKeyword, $currentArr[3])
+					 EndIf
+					 _GUICtrlComboBox_SetEditText($cmbSubKeyword, $currentArr[4])
+					 GUICtrlSetState($updateStepBtn, $GUI_SHOW)
+					 GUICtrlSetState($addStepBtn, $GUI_HIDE)
+				  Else
+					 MsgBox($MB_ICONERROR, "", "The row select to update must be without empty !")
+				  EndIf
+            EndSwitch
+    EndSwitch
+    Return $GUI_RUNDEFMSG
+ EndFunc
+
 #EndRegion
 Func duplicateStep()
    $listCount = _GUICtrlListView_GetItemCount($stepList)
@@ -779,6 +852,9 @@ Func duplicateStep()
    GUICtrlCreateListViewItem($listCount + 1 &"|"& $currentArr[2] & "|" & $currentArr[3]&"|"&$currentArr[4], $stepList)
 EndFunc
 Func initForm()
+   GUICtrlSetState($updateStepBtn, $GUI_HIDE)
+   GUICtrlSetState($addStepBtn, $GUI_SHOW)
+   $selected_row = Null
    ; reset testcase file name
    GUICtrlSetData($cmbFileName,'')
    GUICtrlSetData($cmbFileName, $testcase_FileName, "routing_interfaces.yaml")
@@ -812,6 +888,7 @@ Func initForm()
 	  GUICtrlSetData($msgUpgradeTxt, "")
 	  GUICtrlSetState($upgradeBtn, $GUI_DISABLE)
    EndIf
+
 EndFunc
 
 Func updateButtonStatus()
