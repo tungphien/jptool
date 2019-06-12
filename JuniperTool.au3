@@ -368,8 +368,12 @@ Func updateStep()
 	  _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbNameOfStepValue , 1)
 	  If StringInStr($common_step,$cmbNameOfStepValue) <= 0 Then
 		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbKeywordValue , 2)
+		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbSubKeywordValue, 3)
+	  Else
+		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, '' , 2)
+		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, '', 3)
 	  EndIf
-	  _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbSubKeywordValue, 3)
+
 	  ;set state for button add and update
 	  GUICtrlSetState($updateStepBtn, $GUI_HIDE)
 	  GUICtrlSetState($addStepBtn, $GUI_SHOW)
