@@ -4,7 +4,7 @@ Granular_tests:
 
 
     # Owner: nhuu
-    aaa:
+    aaaas:
         common_variables:
                  device: device
         steps:
@@ -16,9 +16,14 @@ Granular_tests:
                              command: 'set cli timestamp'
                          unique_id: 1
                  2:
-                     hello:
+                     connect_shell_to_execute_server:
+                         run_keyword:
+                             keyword: '${server-handle}    Connect To Device    host=${server_ip}    os=linux    connect_mode=${ssh_mode}    user=${server_user}    password=${server_password}'
+                         unique_id: 2
+                 3:
+                     aaa:
                          run_event:
-                             keyword: 'On CLI'
+                             keyword: 'On Config'
                              device: device
                              command: # --> need to update
-                         unique_id: 2
+                         unique_id: 3

@@ -140,7 +140,7 @@ _GUICtrlListView_InsertColumn($stepList, 2, "Keyword", 150)
 _GUICtrlListView_InsertColumn($stepList, 3, "Sub-Keyword", 150)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
 ; Set default add_timestamp
-GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
+GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|", $stepList)
 Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 530, 420, 60, 60, $BS_ICON)
 GUICtrlSetImage($generateStepBtn, "icons\yaml.ico", 1)
 updateButtonStatus()
@@ -195,6 +195,8 @@ Local $hDelKey = GUICtrlCreateDummy()
 Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
 #EndRegion
+$doubleClickDummy = GUICtrlCreateDummy()
+
 GUICtrlSetOnEvent($upgradeBtn, 'updateApp')
 GUICtrlSetOnEvent($duplicateBtn,'duplicateStep')
 GUICtrlSetOnEvent($reloadBtn,'initForm')
@@ -214,14 +216,16 @@ GUICtrlSetOnEvent($downBtn, "moveDownStep")
 GUICtrlSetOnEvent($upBtn, "moveUpStep")
 GUISetOnEvent($GUI_EVENT_PRIMARYDOWN,"_Arrange_ListStep")
 GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
+GUICtrlSetOnEvent($doubleClickDummy, "listDoubleClick")
 GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
 GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
+
 
 While True
 	;Sleep(200)
    Switch _GUICtrlComboBox_GetCurSel($cmbKeyword)
-   Case 4
-	   _GUICtrlComboBox_SetCurSel($cmbKeyword, 5)
+	  Case 4
+		  _GUICtrlComboBox_SetCurSel($cmbKeyword, 5)
    EndSwitch
    If $ComboBox_NameOfStep_Changed Then
 	 $ComboBox_NameOfStep_Changed = False
@@ -362,9 +366,7 @@ Func updateStep()
 	  $cmbSubKeywordValue = GUICtrlRead($cmbSubKeyword)
 
 	  _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbNameOfStepValue , 1)
-	  If StringInStr($common_step,$cmbNameOfStepValue) > 0 Then
-		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbNameOfStepValue , 2)
-	  Else
+	  If StringInStr($common_step,$cmbNameOfStepValue) <= 0 Then
 		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbKeywordValue , 2)
 	  EndIf
 	  _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbSubKeywordValue, 3)
@@ -622,7 +624,7 @@ Func addStepByListCommands($all_commands)
    ; reset list Step
    _GUICtrlListView_DeleteAllItems($stepList)
    ; set default value
-   GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
+   GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|", $stepList)
    If UBound($all_commands)<=0 Then
 	   MsgBox($MB_ICONERROR, "", "This MTP have no test log !")
    Else
@@ -802,46 +804,46 @@ Func WM_COMMAND($hWnd, $iMsg, $iwParam, $ilParam)
  EndFunc   ;==>WM_COMMAND
 #EndRegion
 
-; This works with either type of ListView
-Func WM_NOTIFY($hWnd, $iMsg, $wParam, $lParam)
 
-    #forceref $hWnd, $iMsg, $wParam
-
-    Local $hWndFrom, $iIDFrom, $iCode, $tNMHDR
-
-    $tNMHDR = DllStructCreate("hwnd;uint_ptr;int_ptr;int;int", $lParam)
-    $hWndFrom = HWnd(DllStructGetData($tNMHDR, 1))
-    $iCode = DllStructGetData($tNMHDR, 3)
-
+Func WM_NOTIFY($hWnd, $iMsg, $iwParam, $ilParam)
+    Local $hWndFrom, $iIDFrom, $iCode, $tNMHDR, $hWndListView
     $hWndListView = $stepList
     If Not IsHWnd($stepList) Then $hWndListView = GUICtrlGetHandle($stepList)
+
+    $tNMHDR = DllStructCreate($tagNMHDR, $ilParam)
+    $hWndFrom = HWnd(DllStructGetData($tNMHDR, "hWndFrom"))
+    $iCode = DllStructGetData($tNMHDR, "Code")
 
     Switch $hWndFrom
         Case $hWndListView
             Switch $iCode
-			   Case $NM_DBLCLK
-				  $selected_row = DllStructGetData($tNMHDR, 4)
-				  $selected_col = DllStructGetData($tNMHDR, 5)
-				  $currentArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList, $selected_row),'|')
-				  If $currentArr[2]<>'' Then
-					 $indexStepUpdate = $selected_row
-					 ;binding data to the input when double click
-					 _GUICtrlComboBox_SetEditText ( $cmbNameOfStep, $currentArr[2])
-					 If StringInStr($common_step, $currentArr[2]) > 0 Then
-						_GUICtrlComboBox_SetEditText ( $cmbKeyword, '')
-					 Else
-						_GUICtrlComboBox_SetEditText ( $cmbKeyword, $currentArr[3])
-					 EndIf
-					 _GUICtrlComboBox_SetEditText($cmbSubKeyword, $currentArr[4])
-					 GUICtrlSetState($updateStepBtn, $GUI_SHOW)
-					 GUICtrlSetState($addStepBtn, $GUI_HIDE)
-				  Else
-					 MsgBox($MB_ICONERROR, "", "The row select to update must be without empty !")
-				  EndIf
-            EndSwitch
+                Case $NM_DBLCLK
+                  ; Fire the dummy if the ListView is double clicked
+				  GUICtrlSendToDummy($doubleClickDummy)
+				  $indexStepUpdate = _GUICtrlListView_GetSelectedIndices($stepList)
+		 EndSwitch
     EndSwitch
+
     Return $GUI_RUNDEFMSG
  EndFunc
+
+Func listDoubleClick()
+   $currentArr = StringSplit(_GUICtrlListView_GetItemTextString($stepList),'|')
+   If $currentArr[2]<>'' Then
+	  ;binding data to the input when double click
+	  _GUICtrlComboBox_SetEditText ( $cmbNameOfStep, $currentArr[2])
+	  If StringInStr($common_step, $currentArr[2]) > 0 Then
+		 _GUICtrlComboBox_SetEditText ( $cmbKeyword, '')
+	  Else
+		 _GUICtrlComboBox_SetEditText ( $cmbKeyword, $currentArr[3])
+	  EndIf
+	  _GUICtrlComboBox_SetEditText($cmbSubKeyword, $currentArr[4])
+	  GUICtrlSetState($updateStepBtn, $GUI_SHOW)
+	  GUICtrlSetState($addStepBtn, $GUI_HIDE)
+   Else
+	  MsgBox($MB_ICONERROR, "", "The row select to update must be without empty !")
+   EndIf
+EndFunc
 
 #EndRegion
 Func duplicateStep()
@@ -871,7 +873,7 @@ Func initForm()
    ; reset list Step
    _GUICtrlListView_DeleteAllItems($stepList)
    ; Set default add_timestamp
-   GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|add_timestamp", $stepList)
+   GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|", $stepList)
    ; update status button
    updateButtonStatus()
    GUICtrlSetState($addStepBtn, $GUI_DISABLE)
