@@ -107,11 +107,11 @@ Next
 #EndRegion
 
 Local $cmbNameOfStep = GUICtrlCreateCombo("Name of step", 10, 110, 440, 21, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
-GUICtrlSetTip(-1, "Name of step", 'Information', $TIP_INFOICON)
+GUICtrlSetTip(-1, "You can input text or select the common step.", 'Name of step', $TIP_INFOICON)
 Local $cmbKeyword = GUICtrlCreateCombo("", 10, 140,200,21, BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
-GUICtrlSetTip(-1, "Select a Keyword", 'Information', $TIP_INFOICON)
+GUICtrlSetTip(-1, "You can be select a Keyword", 'Name of Keyword', $TIP_INFOICON)
 Local $cmbSubKeyword = GUICtrlCreateCombo("", 220, 140, 230,21,BitOR($CBS_DROPDOWN, $CBS_AUTOHSCROLL, $WS_VSCROLL, $CBS_SORT))
-GUICtrlSetTip(-1, "Select a Sub-Keyword", 'Information', $TIP_INFOICON)
+GUICtrlSetTip(-1, "You can be select a Sub-Keyword", 'Name of Sub-Keyword', $TIP_INFOICON)
 
 
 Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,130,50)
