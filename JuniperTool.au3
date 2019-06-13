@@ -84,6 +84,7 @@ Local $txtTestcaseName = GUICtrlCreateInput("name_of_testcase", 130, 70,300)
 GUICtrlCreateLabel("(*)", 440, 70)
 GUICtrlSetColor (-1, $COLOR_RED )
 Local $loadMTPBtn = GUICtrlCreateButton("Load MTP", 460, 40,120,50)
+GUICtrlSetTip(-1, "Click here to browse the MTP file.", 'Browse the MTP file', $TIP_INFOICON)
 GUICtrlSetImage($loadMTPBtn,"icons\word.ico",221,0)
 
 #Region Read tsc.yaml
@@ -115,24 +116,32 @@ GUICtrlSetTip(-1, "You can be select a Sub-Keyword", 'Name of Sub-Keyword', $TIP
 
 
 Local $addStepBtn = GUICtrlCreateButton("Add", 460, 110,130,50)
+GUICtrlSetTip(-1, "Add step into list.", 'Add step', $TIP_INFOICON)
 GUICtrlSetImage($addStepBtn,"icons\add.ico",221,0)
 Local $updateStepBtn = GUICtrlCreateButton("Update", 460, 110,130,50)
+GUICtrlSetTip(-1, "Update the change of selected step.", 'Update step', $TIP_INFOICON)
 GUICtrlSetImage($updateStepBtn,"icons\update.ico",221,0)
 
 
 Local $deleteStepBtn = GUICtrlCreateButton("Delete", 530, 170,60,40)
+GUICtrlSetTip(-1, "Delete step from list.", 'Delete step', $TIP_INFOICON)
 GUICtrlSetImage($deleteStepBtn,"icons\delete.ico",221,0)
 Local $downBtn = GUICtrlCreateButton("Down", 530, 270,60,40)
+GUICtrlSetTip(-1, "Move down step.", 'Move down', $TIP_INFOICON)
 GUICtrlSetImage($downBtn,"icons\down.ico",221,0)
 Local $upBtn = GUICtrlCreateButton("Up", 530, 220,60,40)
+GUICtrlSetTip(-1, "Move up step.", 'Move up', $TIP_INFOICON)
 GUICtrlSetImage($upBtn,"icons\up.ico",221,0)
 Local $duplicateBtn = GUICtrlCreateButton("Copy", 530, 320,60,40)
+GUICtrlSetTip(-1, "Duplicate the selected step.", 'Duplicate step', $TIP_INFOICON)
 
 GUICtrlSetImage($duplicateBtn,"icons\duplicate.ico",221,0)
 Local $reloadBtn = GUICtrlCreateButton("Reload", 530, 370,60,40)
+GUICtrlSetTip(-1, "Reset all data of elements on form.", 'Refresh form', $TIP_INFOICON)
 GUICtrlSetImage($reloadBtn,"icons\reload.ico",221,0)
 
 Local $stepList = GUICtrlCreateListView("", 10, 170, 510, 310)
+GUICtrlSetTip(-1, "Double click on the row to Update.", 'List of steps', $TIP_INFOICON)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
 _GUICtrlListView_InsertColumn($stepList, 1, "Name of step", 150)
@@ -142,6 +151,7 @@ _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $L
 ; Set default add_timestamp
 GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|", $stepList)
 Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 530, 420, 60, 60, $BS_ICON)
+GUICtrlSetTip(-1, "Generate steps into YAML file.", 'Generate YAML file', $TIP_INFOICON)
 GUICtrlSetImage($generateStepBtn, "icons\yaml.ico", 1)
 updateButtonStatus()
 #EndRegion
@@ -153,6 +163,7 @@ Local $browseFileBtn = GUICtrlCreateButton("Browse file", 500, 40, 90, 30)
 
 GUICtrlCreateGroup("Actions", 10, 80, 580, 70)
 Local $formatFileBtn = GUICtrlCreateButton("Format and Re-Index Unique", 20, 105, 180, 30)
+GUICtrlSetTip(-1, "Click here to format and re-index unique.", 'Format and Re-Index Unique', $TIP_INFOICON)
 GUICtrlSetImage($formatFileBtn,"icons\format.ico",221,0)
 #EndRegion
 
@@ -164,12 +175,14 @@ Local $inputAgniPath = GUICtrlCreateInput("",10, 60, 480,30)
 GUICtrlSetData($inputAgniPath, json_get($object,'[agni_path]'))
 Local $browseAgniPathBtn = GUICtrlCreateButton("Browse folder", 500, 60, 90, 30)
 Local $refreshAgniKeywordBtn = GUICtrlCreateButton("Refresh Agni Keyword", 10, 100, 150, 30)
+GUICtrlSetTip(-1, "Click here to get the latest keywords from your Agni directory.", 'Refresh Agni Keyword', $TIP_INFOICON)
 GUICtrlSetImage($refreshAgniKeywordBtn,"icons\refresh.ico",221,0)
 #EndRegion
 
 #Region Tab About
 GUICtrlCreateTabItem("About")
 Local $upgradeBtn = GUICtrlCreateButton("Upgrade", 10, 30,100,30)
+GUICtrlSetTip(-1, "Click here to get the latest update for the tool.", 'Upgrade the tool', $TIP_INFOICON)
 Local $msgUpgradeTxt = GUICtrlCreateLabel("", 120, 40,400,30)
 GUICtrlSetColor ($msgUpgradeTxt, $COLOR_RED )
 Local $lblAbout = GUICtrlCreateLabel("", 10, 70, 600,450)
@@ -578,7 +591,7 @@ Func aliasNameByCharacter($str, $pattern, $character)
 EndFunc
 
 Func handleMTP($sPath)
-   ;loadingProgress(500,"Loading command from MTP file.","Reading...")
+   ProgressOn("Loading command from MTP file.", "Processing", "0%")
    Local $oWord = _Word_Create()
    Local $oDoc = _Word_DocOpen($oWord, $sPath)
    Local $oRange = $oDoc.Range
@@ -618,10 +631,13 @@ Func handleMTP($sPath)
 	  EndIf
 	  $i=$i+1
    Next
+   ProgressSet(80, "80%")
    _Word_DocClose($oDoc)
    _Word_Quit($oWord)
    GUICtrlSetData($txtTestcaseName,$testcase_name)
    addStepByListCommands($all_commands)
+   ProgressSet(100, "Complete", "Complete")
+   ProgressOff()
 EndFunc
 
 Func addStepByListCommands($all_commands)
