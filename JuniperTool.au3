@@ -233,6 +233,18 @@ GUICtrlSetOnEvent($doubleClickDummy, "listDoubleClick")
 GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
 GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
 
+#Region Ctrl + z, Ctrl + y, Ctrl + s Key
+$ctrlY = GUICtrlCreateDummy()
+$ctrlZ = GUICtrlCreateDummy()
+$ctrlS = GUICtrlCreateDummy()
+Dim $EnterKeys[1][2]=[["{ENTER}", $hEnterKey]]
+Dim $AccelKeys[3][2]=[["^z", $ctrlZ], ["^y", $ctrlY], ["^s", $ctrlS]]
+GUISetAccelerators($AccelKeys)
+GUICtrlSetOnEvent($ctrlZ, "_ControlZAction")
+GUICtrlSetOnEvent($ctrlY, "_ControlYAction")
+GUICtrlSetOnEvent($ctrlS, "_ControlSAction")
+
+#EndRegion
 
 While True
 	;Sleep(200)
@@ -262,6 +274,17 @@ Func _Login()
 Func RunApp()
    GUISetState(@SW_SHOW, $hGUI)
 EndFunc
+
+Func _ControlZAction()
+   ConsoleWrite("_ControlZAction")
+EndFunc
+Func _ControlYAction()
+   ConsoleWrite("_ControlYAction")
+EndFunc
+Func _ControlSAction()
+   ConsoleWrite("_ControlSAction")
+EndFunc
+
 
 #Region List Step Control
 Func moveDownStep()

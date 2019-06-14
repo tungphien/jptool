@@ -1,36 +1,28 @@
-#Include <GUIConstantsEx.au3>
-#include <EditConstants.au3>
+
+#include <GUIConstantsEx.au3>
+#include <ListViewConstants.au3>
 #include <WindowsConstants.au3>
+#include <GUIListView.au3>
 
-$hGUI = GUICreate("Test", 300, 200)
-$iLabel = GUICtrlCreateLabel("Test", 10, 10)
-$iBtn = GUICtrlCreateButton("Exit", 200, 100, 60, 60)
-$key = GUICtrlCreateInput("Keys to press (optional)", 16, 160, 145, 21)
-ControlFocus($hGUI, "", $iLabel)
-GUISetState()
+#Region ### START Koda GUI section ### Form=
+$Form1 = GUICreate("Form1", 355, 226, 192, 114)
+$ListView1 = GUICtrlCreateListView("col1|col2|col3", 48, 16, 250, 150, BitOR($LVS_REPORT,$LVS_SHOWSELALWAYS), BitOR($WS_EX_CLIENTEDGE,$LVS_EX_FULLROWSELECT))
+GUICtrlSendMsg(-1, $LVM_SETCOLUMNWIDTH, 0, 50)
+GUICtrlSendMsg(-1, $LVM_SETCOLUMNWIDTH, 1, 50)
+GUICtrlSendMsg(-1, $LVM_SETCOLUMNWIDTH, 2, 50)
+$ListView1_0 = GUICtrlCreateListViewItem("a1|b1|c1", $ListView1)
+$ListView1_1 = GUICtrlCreateListViewItem("a2|b2|c2", $ListView1)
+$ListView1_2 = GUICtrlCreateListViewItem("a3|b3|c3", $ListView1)
+$Button1 = GUICtrlCreateButton("Button1", 136, 184, 75, 25)
+GUISetState(@SW_SHOW)
+#EndRegion ### END Koda GUI section ###
 
-GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
-
-Do
-    Switch GUIGetMsg()
-        Case $GUI_EVENT_CLOSE, $iBtn
-            GUIDelete()
+While 1
+    $nMsg = GUIGetMsg()
+    Switch $nMsg
+        Case $GUI_EVENT_CLOSE
             Exit
+        Case $Button1
+            MsgBox(4160, "Information", "Selected Indices: " & _GUICtrlListView_GetSelectedIndices($ListView1))
     EndSwitch
-Until False
-
-Func WM_COMMAND($hWnd, $iMsg, $wParam, $lParam)
-    Switch $hWnd
-        Case $hGUI
-            Switch BitAND($wParam, 0xFFFF)
-                Case $key
-                    Switch BitShift($wParam, 16)
-                        Case $EN_KILLFOCUS
-                            If GUICtrlRead($key) = "" Then GUICtrlSetData($key, "Keys to press (optional)")
-                        Case $EN_SETFOCUS
-                            If GUICtrlRead($key) = "Keys to press (optional)" Then GUICtrlSetData($key, "")
-                    EndSwitch
-            EndSwitch
-    EndSwitch
-    Return $GUI_RUNDEFMSG
-EndFunc   ;==>WM_COMMAND
+WEnd
