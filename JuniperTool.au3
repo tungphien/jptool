@@ -1,3 +1,4 @@
+#include <Date.au3>
 #include <ButtonConstants.au3>
 #include <EditConstants.au3>
 #include "JSON.au3"
@@ -19,6 +20,7 @@ Global $version = 'Version: 2.6'
 Global $ComboBox_NameOfStep_Changed = False
 Global $indexStepUpdate = Null
 Global $COMMIT_FILE=''
+Global $trackingListViewLog=''
 Opt("GUIOnEventMode", 1);
 #Region Loading
 loadingProgress(500,"Load Juniper Tool","Openning Program")
@@ -202,7 +204,6 @@ Local $PYTHON_FULLTEXT_VERSION =''
 Local $PYTHON_CMD = getPythonVersion()
 
 #EndRegion
-initForm()
 #Region Delete Key detect
 Local $hDelKey = GUICtrlCreateDummy()
 Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
@@ -237,7 +238,6 @@ GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
 $ctrlY = GUICtrlCreateDummy()
 $ctrlZ = GUICtrlCreateDummy()
 $ctrlS = GUICtrlCreateDummy()
-Dim $EnterKeys[1][2]=[["{ENTER}", $hEnterKey]]
 Dim $AccelKeys[3][2]=[["^z", $ctrlZ], ["^y", $ctrlY], ["^s", $ctrlS]]
 GUISetAccelerators($AccelKeys)
 GUICtrlSetOnEvent($ctrlZ, "_ControlZAction")
@@ -273,10 +273,75 @@ Func _Login()
 
 Func RunApp()
    GUISetState(@SW_SHOW, $hGUI)
+   initForm()
+EndFunc
+
+Func getListViewContent()
+   $arrSteps=''
+   For $x = 0 To _GUICtrlListView_GetItemCount($stepList) - 1
+	  $itemText = _GUICtrlListView_GetItemTextString($stepList,$x)
+	  $txtArr = StringSplit($itemText,'|')
+	  $obj = ''
+	  If StringInStr($common_step, $txtArr[2]) > 0 Then
+		 $txtArr[3] = $txtArr[2]
+	  EndIf
+	  $obj = $obj & $txtArr[2] & '#' & $txtArr[3]
+	  If StringStripWS($txtArr[4],  $STR_STRIPSPACES)<>'' Then
+		 $obj = $obj & '#' & $txtArr[4]
+	  EndIf
+	  If $arrSteps<>'' Then
+		 $arrSteps = $arrSteps & ',"' & $obj & '"'
+	  Else
+		 $arrSteps = '"' & $obj & '"'
+	  EndIf
+   Next
+   Return $arrSteps
+EndFunc
+
+
+Func addTrackLogBacking()
+   If $trackingListViewLog<>'' Then
+	  $trackingListViewLog = $trackingListViewLog &'@' & getListViewContent()
+   Else
+	   $trackingListViewLog = getListViewContent()
+   EndIf
 EndFunc
 
 Func _ControlZAction()
    ConsoleWrite("_ControlZAction")
+   if StringInStr($trackingListViewLog,'@')>0 Then
+	  $arr = StringSplit($trackingListViewLog,'@')
+	  $previous_listview_data = $arr[UBound($arr)-1]
+	  ; reset list Step
+	  _GUICtrlListView_DeleteAllItems($stepList)
+	  $arrSteps= StringSplit($previous_listview_data, ',')
+	  For $rd = 1 to UBound($arrSteps) - 1
+		 $row = StringRegExpReplace($arrSteps[$rd],'\"',"")
+		 ConsoleWrite($row)
+		 $cols = StringSplit($row,'#')
+		 $col2 =''
+		 $col3 =''
+		 $col4 =''
+		 $numberOfCol = UBound($cols)-1
+		 If  $numberOfCol >=1 Then
+			$col2= $cols[1]
+		 EndIf
+		 If StringInStr($common_step,$col2) <=0 Then
+			If  $numberOfCol >=2 Then
+			   $col3= $cols[2]
+			EndIf
+			If  $numberOfCol >=3 Then
+			   $col4= $cols[3]
+			EndIf
+		 EndIf
+		 GUICtrlCreateListViewItem( 1 &"|"& $col2 & "|" & $col3 &"|"&$col4, $stepList)
+	  Next
+	  updateIndexNumber()
+
+	 _ArrayDelete($arr, UBound($arr)-1)
+	 _ArrayDelete($arr, 0)
+	 $trackingListViewLog=_ArrayToString($arr, '@')
+   EndIf
 EndFunc
 Func _ControlYAction()
    ConsoleWrite("_ControlYAction")
@@ -288,6 +353,7 @@ EndFunc
 
 #Region List Step Control
 Func moveDownStep()
+   addTrackLogBacking()
    $listCount = _GUICtrlListView_GetItemCount($stepList)
    $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
 
@@ -310,6 +376,7 @@ Func moveDownStep()
 EndFunc
 
 Func moveUpStep()
+   addTrackLogBacking()
    $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
 
    if $Selected - 1 >= 0 Then
@@ -349,6 +416,7 @@ Func updateIndexNumber()
 EndFunc
 
 Func _Arrange_ListStep()
+   ;addTrackLogBacking()
    If _GUICtrlListView_GetItemCount($stepList) > 0 Then
 	  $Selected = _GUICtrlListView_GetHotItem($stepList)
 	  If $Selected = -1 then Return
@@ -379,6 +447,7 @@ Func _Arrange_ListStep()
 EndFunc
 
 Func addStep()
+   addTrackLogBacking()
    $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
    $cmbKeywordValue = GUICtrlRead($cmbKeyword)
    $cmbSubKeywordValue = GUICtrlRead($cmbSubKeyword)
@@ -396,6 +465,7 @@ Func addStep()
 EndFunc
 
 Func updateStep()
+   addTrackLogBacking()
    If $indexStepUpdate<>Null Then
 	  $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
 	  $cmbKeywordValue = GUICtrlRead($cmbKeyword)
@@ -418,6 +488,7 @@ Func updateStep()
 EndFunc
 
 Func deleteStep()
+   addTrackLogBacking()
    $iIndex = _GUICtrlListView_GetSelectedIndices($stepList)
    _GUICtrlListView_DeleteItem($stepList, $iIndex)
    updateIndexNumber()
@@ -544,20 +615,7 @@ Func doGenerateSteps()
    If Not $validateMsg='' Then
 	  MsgBox($MB_ICONERROR, "", $validateMsg)
    Else
-	  Local $arrSteps='' ;[stepname#keyword#subkeyword, stepname#keyword#subkeyword]
-	  For $x = 0 To _GUICtrlListView_GetItemCount($stepList) - 1
-		 $itemText = _GUICtrlListView_GetItemTextString($stepList,$x)
-		 $txtArr = StringSplit($itemText,'|')
-		 $obj = ''
-		 If StringInStr($common_step, $txtArr[2]) > 0 Then
-			$txtArr[3] = $txtArr[2]
-		 EndIf
-		 $obj = $obj & $txtArr[2] & '#' & $txtArr[3]
-		 If Not $txtArr[4]='' Then
-			$obj = $obj & '#' & $txtArr[4]
-		 EndIf
-		 $arrSteps = $arrSteps & ' "' & $obj & '"'
-	  Next
+	  Local $arrSteps= StringRegExpReplace(getListViewContent(),',',' ')
 	  $cmd =$PYTHON_CMD &' main.py -s ' & $arrSteps &' -tn "'& $testcaseName & '" -fn "'& $fileOfTestcase &'" -usr "'& $userNameValue & '"'
 	  WriteLog($cmd)
 	  Local $iPID = Run(@ComSpec & " /c " & $cmd, "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
@@ -897,6 +955,7 @@ Func duplicateStep()
    GUICtrlCreateListViewItem($listCount + 1 &"|"& $currentArr[2] & "|" & $currentArr[3]&"|"&$currentArr[4], $stepList)
 EndFunc
 Func initForm()
+   ProgressOn("Initialing tool", "Processing", "0%")
    GUICtrlSetState($updateStepBtn, $GUI_HIDE)
    GUICtrlSetState($addStepBtn, $GUI_SHOW)
    $selected_row = Null
@@ -925,6 +984,7 @@ Func initForm()
    ; reset output path
    GUICtrlSetData($outputHyperlink, '')
    GUICtrlSetData($lblPythonVersionValue,$PYTHON_FULLTEXT_VERSION)
+   ProgressSet(80, "80%")
    ; check upgrade button
    If checkUpdate() = True Then
 	  GUICtrlSetState($upgradeBtn, $GUI_ENABLE)
@@ -933,7 +993,11 @@ Func initForm()
 	  GUICtrlSetData($msgUpgradeTxt, "")
 	  GUICtrlSetState($upgradeBtn, $GUI_DISABLE)
    EndIf
-
+   ; add tracking
+   $trackingListViewLog=''
+   addTrackLogBacking()
+   ProgressSet(100, "Complete", "Complete")
+   ProgressOff()
 EndFunc
 
 Func updateButtonStatus()
