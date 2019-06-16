@@ -20,7 +20,8 @@ Global $version = 'Version: 2.6'
 Global $ComboBox_NameOfStep_Changed = False
 Global $indexStepUpdate = Null
 Global $COMMIT_FILE=''
-Global $trackingListViewLog=''
+Global $trackingUndoListView=''
+Global $trackingRedoListView=''
 Opt("GUIOnEventMode", 1);
 #Region Loading
 loadingProgress(500,"Load Juniper Tool","Openning Program")
@@ -143,7 +144,7 @@ GUICtrlSetTip(-1, "Reset all data of elements on form.", 'Refresh form', $TIP_IN
 GUICtrlSetImage($reloadBtn,"icons\reload.ico",221,0)
 
 Local $stepList = GUICtrlCreateListView("", 10, 170, 510, 310)
-GUICtrlSetTip(-1, "Double click on the row to Update.", 'List of steps', $TIP_INFOICON)
+GUICtrlSetTip(-1, "Double click on the row to Update."& @CRLF & "Ctrl + Z to Undo"& @CRLF & "Ctrl + Y to Redo", 'List of steps', $TIP_INFOICON)
 ; Add columns
 _GUICtrlListView_InsertColumn($stepList, 0, "#", 30)
 _GUICtrlListView_InsertColumn($stepList, 1, "Name of step", 150)
@@ -298,54 +299,79 @@ Func getListViewContent()
    Return $arrSteps
 EndFunc
 
-
-Func addTrackLogBacking()
-   If $trackingListViewLog<>'' Then
-	  $trackingListViewLog = $trackingListViewLog &'@' & getListViewContent()
+Func addTrackingLog($isRedo=False)
+   If $isRedo = True Then
+	  If $trackingRedoListView<>'' Then
+		 $trackingRedoListView = $trackingRedoListView &'@' & getListViewContent()
+	  Else
+		  $trackingRedoListView = getListViewContent()
+	  EndIf
    Else
-	   $trackingListViewLog = getListViewContent()
+	  If $trackingUndoListView<>'' Then
+		 $trackingUndoListView = $trackingUndoListView &'@' & getListViewContent()
+	  Else
+		  $trackingUndoListView = getListViewContent()
+	  EndIf
    EndIf
+EndFunc
+
+Func bindingDataListView($listviewData)
+   $arrSteps= StringSplit($listviewData, ',')
+   For $rd = 1 to UBound($arrSteps) - 1
+	  $row = StringRegExpReplace($arrSteps[$rd],'\"',"")
+	  ConsoleWrite($row)
+	  $cols = StringSplit($row,'#')
+	  $col2 =''
+	  $col3 =''
+	  $col4 =''
+	  $numberOfCol = UBound($cols)-1
+	  If  $numberOfCol >=1 Then
+		 $col2= $cols[1]
+	  EndIf
+	  If StringInStr($common_step,$col2) <=0 Then
+		 If  $numberOfCol >=2 Then
+			$col3= $cols[2]
+		 EndIf
+		 If  $numberOfCol >=3 Then
+			$col4= $cols[3]
+		 EndIf
+	  EndIf
+	  GUICtrlCreateListViewItem( 1 &"|"& $col2 & "|" & $col3 &"|"&$col4, $stepList)
+   Next
+   updateIndexNumber()
+EndFunc
+
+Func handleTrackingLog($trackingLogData)
+   $arr = StringSplit($trackingLogData,'@')
+   $data = $arr[UBound($arr)-1]
+   ; reset list Step
+   _GUICtrlListView_DeleteAllItems($stepList)
+   bindingDataListView($data)
+
+  _ArrayDelete($arr, UBound($arr)-1)
+  _ArrayDelete($arr, 0)
+  $trackingLogData=_ArrayToString($arr, '@')
+  Return $trackingLogData
 EndFunc
 
 Func _ControlZAction()
    ConsoleWrite("_ControlZAction")
-   if StringInStr($trackingListViewLog,'@')>0 Then
-	  $arr = StringSplit($trackingListViewLog,'@')
-	  $previous_listview_data = $arr[UBound($arr)-1]
-	  ; reset list Step
-	  _GUICtrlListView_DeleteAllItems($stepList)
-	  $arrSteps= StringSplit($previous_listview_data, ',')
-	  For $rd = 1 to UBound($arrSteps) - 1
-		 $row = StringRegExpReplace($arrSteps[$rd],'\"',"")
-		 ConsoleWrite($row)
-		 $cols = StringSplit($row,'#')
-		 $col2 =''
-		 $col3 =''
-		 $col4 =''
-		 $numberOfCol = UBound($cols)-1
-		 If  $numberOfCol >=1 Then
-			$col2= $cols[1]
-		 EndIf
-		 If StringInStr($common_step,$col2) <=0 Then
-			If  $numberOfCol >=2 Then
-			   $col3= $cols[2]
-			EndIf
-			If  $numberOfCol >=3 Then
-			   $col4= $cols[3]
-			EndIf
-		 EndIf
-		 GUICtrlCreateListViewItem( 1 &"|"& $col2 & "|" & $col3 &"|"&$col4, $stepList)
-	  Next
-	  updateIndexNumber()
-
-	 _ArrayDelete($arr, UBound($arr)-1)
-	 _ArrayDelete($arr, 0)
-	 $trackingListViewLog=_ArrayToString($arr, '@')
+   ConsoleWrite( @CRLF& $trackingRedoListView& @CRLF)
+   if $trackingUndoListView <> '' Then
+	  addTrackingLog(True)
+	  $trackingUndoListView = handleTrackingLog($trackingUndoListView)
    EndIf
 EndFunc
+
 Func _ControlYAction()
    ConsoleWrite("_ControlYAction")
+   ConsoleWrite( @CRLF& $trackingRedoListView& @CRLF)
+   if $trackingRedoListView<>'' Then
+	  addTrackingLog(False)
+  	  $trackingRedoListView = handleTrackingLog($trackingRedoListView)
+   EndIf
 EndFunc
+
 Func _ControlSAction()
    ConsoleWrite("_ControlSAction")
 EndFunc
@@ -353,7 +379,7 @@ EndFunc
 
 #Region List Step Control
 Func moveDownStep()
-   addTrackLogBacking()
+   addTrackingLog()
    $listCount = _GUICtrlListView_GetItemCount($stepList)
    $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
 
@@ -376,7 +402,7 @@ Func moveDownStep()
 EndFunc
 
 Func moveUpStep()
-   addTrackLogBacking()
+   addTrackingLog()
    $Selected = _GUICtrlListView_GetSelectedIndices($stepList)
 
    if $Selected - 1 >= 0 Then
@@ -416,7 +442,7 @@ Func updateIndexNumber()
 EndFunc
 
 Func _Arrange_ListStep()
-   ;addTrackLogBacking()
+   ;addTrackingLog()
    If _GUICtrlListView_GetItemCount($stepList) > 0 Then
 	  $Selected = _GUICtrlListView_GetHotItem($stepList)
 	  If $Selected = -1 then Return
@@ -447,7 +473,7 @@ Func _Arrange_ListStep()
 EndFunc
 
 Func addStep()
-   addTrackLogBacking()
+   addTrackingLog()
    $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
    $cmbKeywordValue = GUICtrlRead($cmbKeyword)
    $cmbSubKeywordValue = GUICtrlRead($cmbSubKeyword)
@@ -465,7 +491,7 @@ Func addStep()
 EndFunc
 
 Func updateStep()
-   addTrackLogBacking()
+   addTrackingLog()
    If $indexStepUpdate<>Null Then
 	  $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
 	  $cmbKeywordValue = GUICtrlRead($cmbKeyword)
@@ -488,7 +514,7 @@ Func updateStep()
 EndFunc
 
 Func deleteStep()
-   addTrackLogBacking()
+   addTrackingLog()
    $iIndex = _GUICtrlListView_GetSelectedIndices($stepList)
    _GUICtrlListView_DeleteItem($stepList, $iIndex)
    updateIndexNumber()
@@ -994,8 +1020,9 @@ Func initForm()
 	  GUICtrlSetState($upgradeBtn, $GUI_DISABLE)
    EndIf
    ; add tracking
-   $trackingListViewLog=''
-   addTrackLogBacking()
+   $trackingUndoListView=''
+   $trackingRedoListView=''
+   addTrackingLog()
    ProgressSet(100, "Complete", "Complete")
    ProgressOff()
 EndFunc
