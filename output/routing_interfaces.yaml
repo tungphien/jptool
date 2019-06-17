@@ -4,14 +4,211 @@ Granular_tests:
 
 
     # Owner: nhuu
-    aa:
+    a:
         common_variables:
                  device: device
         steps:
+Granular_tests:
+
+
+    # Owner: owner_name
+    testcase_name:
+        common_variables:
+                 device: device
+        steps:
+                 #add_timestamp@
                  1:
-                     add_timestamp:
+                     add_timestampa:
                          run_event:
                              keyword: On CLI
                              device: device
                              command: 'set cli timestamp'
                          unique_id: 1
+                 #get_handle@
+                 2:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: '${dh}    Get Handle    resource=${device}'
+                         unique_id: 2
+                 #create_dictionary_and_check@
+                 3:
+                     add_timestampa:
+                         create_dictionary_and_check:
+                             keyword_operator: #--> need to update
+                             keyword_value: # --> need to update
+                             loop_over_list:
+                                 - instance_interface_list # --> need to update
+                                 - instance_name_list # --> need to update
+                             checks:
+                                       - check_keyword_1 # --> need to update
+                                       - check_keyword_2 # --> need to update
+                             devices: device
+                         unique_id: 3
+                 #create_dictionary_and_get@
+                 4:
+                     add_timestampa:
+                         create_dictionary_and_get:
+                             loop_over_list:
+                                 - lag_interfaces_list # --> need to update
+                             checks:
+                                       - check_keyword_1 # --> need to update
+                                       - check_keyword_2 # --> need to update
+                             devices: device
+                             return_variable_name: # --> need to update
+                         unique_id: 4
+                 #run_keyword@
+                 5:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: '<<sub-keyword>>'
+                             return_variable_name: dh
+                         unique_id: 5
+                 #run_event@
+                 6:
+                     add_timestampa:
+                         run_event:
+                             keyword: '<<sub-keyword>>'
+                             device: device
+                             command: # --> need to update
+                         unique_id: 6
+                 #revert_config@
+                 7:
+                     add_timestampa:
+                         run_event:
+                             keyword: On Config
+                             device: device
+                             command: 'rollback 1,
+                             commit'
+                         unique_id: 7
+                 #verify_ping_successful@
+                 8:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: 'Check Ping Connection    device=${device_handle}    destination=${ip_destination}    source=${ip_source}'
+                         unique_id: 8
+                 #get_device_ip@
+                 9:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: "${device_ip}=    Set Variable    ${tv['${device}__${controller}__mgt-ip']}"
+                         unique_id: 9
+                 #get_junos_version_of_host@
+                 10:
+                     add_timestampa:
+                         create_dictionary_and_get:
+                             checks:
+                                       - show_version
+                                       - junos_version
+                             return_variable_name: junos_version
+                             devices: device
+                         unique_id: 10
+                 #execute_ssh_on_shell_server@
+                 11:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: 'Execute Shell Command On Device     ${server-handle}   command=ssh ${device_ip}    timeout=${60}'
+                         unique_id: 11
+                 #timeout@
+                 12:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: 'Sleep    ${sleep_time}'
+                         unique_id: 12
+                 #clear_log_messages@
+                 13:
+                     add_timestampa:
+                         run_event:
+                             keyword: On CLI
+                             device: device
+                             command: 'clear log messages'
+                         unique_id: 13
+                 #get_controller_name@
+                 14:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: '${controller}=    Get Current Controller Name    ${dh}'
+                         unique_id: 14
+                 #get_hostname@
+                 15:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: "${hostname}=    Set Variable    ${tv['${device}__${controller}__hostname']}"
+                         unique_id: 15
+                 #get_device_username@
+                 16:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: "${device_username}=    Set Variable    ${tv['${device}__${controller}__user']}"
+                         unique_id: 16
+                 #get_mac_address_of_server@
+                 17:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: '${mac_of_server}    Get Server Mac Address   ifconfig_op=${response}'
+                         unique_id: 17
+                 #connect_shell_to_execute_server@
+                 18:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: '${server-handle}    Connect To Device    host=${server_ip}    os=linux    connect_mode=${ssh_mode}    user=${server_user}    password=${server_password}'
+                         unique_id: 18
+                 #execute_tcp_dump_command_on_server@
+                 19:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: '${tcp_pid}    Start Tcpdump    device=${dh}    pcapfile=firewall_log.pcap    interface=${intf_name}    port=514'
+                         unique_id: 19
+                 #stop_tcpdump_process@
+                 20:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: 'Stop Tcpdump    device=${dh}    pid=${tcp_pid}'
+                         unique_id: 20
+                 #run_ping@
+                 21:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: 'Execute Shell Command On Device    ${dh}    command=ping -c 5 ${ipv6_destination} >pingtest.txt    timeout=${60}'
+                         unique_id: 21
+                 #reboot_device@
+                 22:
+                     add_timestampa:
+                         run_keyword:
+                             keyword: '${status}   Reboot device    ${dh}   mode=cli   wait=180  all=True'
+                         unique_id: 22
+                #show_log_messages@
+                 1:
+                     get_show_log_messages:
+                         run_keyword:
+                             keyword: '${response}    Execute Cli Command On Device    ${dh}    command=show log messages'
+                         unique_id: 23
+                 #no_core_dumps@
+                 23:
+                     create_core_path_list:
+                         run_keyword:
+                             keyword: '${core_path}=    Create List    /tftpboot/corefiles/*core    /var/jails/rest-api/tmp/*core    /var/crash/kernel.    /var/tmp/pics/*core    /var/tmp/*core*    /var/crash/*core*'
+                         unique_id: 24
+                 24:
+                     get_system_core_dumps:
+                         run_keyword:
+                             keyword: '${core_status_list}=    Detect Core On Junos Device  core_path=${core_path}  resource=${device}'
+                         unique_id: 25
+                 25:
+                     verify_system_core_dumps:
+                         run_keyword:
+                             loop_over_list:
+                                 - core_status_list
+                             keyword: 'Should Not Be True    ${core_status}'
+                         unique_id: 26
+                 #cpu_ultilization@
+                 26:
+                     verify_cpu_utilization:
+                         run_keyword:
+                             keyword: 'check cpu usage  device=${device}'
+                         unique_id: 27
+                 #traffic_is_restored@
+                 27:
+                     verify_ixia_traffic_stats:
+                         clear_and_check_traffic_stats:
+                             devices: device
+                         unique_id: 28

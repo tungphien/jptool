@@ -151,8 +151,7 @@ _GUICtrlListView_InsertColumn($stepList, 1, "Name of step", 150)
 _GUICtrlListView_InsertColumn($stepList, 2, "Keyword", 150)
 _GUICtrlListView_InsertColumn($stepList, 3, "Sub-Keyword", 150)
 _GUICtrlListView_SetExtendedListViewStyle($stepList, BitOR($LVS_EX_GRIDLINES, $LVS_EX_FULLROWSELECT))
-; Set default add_timestamp
-GUICtrlCreateListViewItem(_GUICtrlListView_GetItemCount($stepList)+1 &"|add_timestamp|", $stepList)
+
 Local $generateStepBtn = GUICtrlCreateButton("Generate testcase", 530, 420, 60, 60, $BS_ICON)
 GUICtrlSetTip(-1, "Generate steps into YAML file.", 'Generate YAML file', $TIP_INFOICON)
 GUICtrlSetImage($generateStepBtn, "icons\yaml.ico", 1)
@@ -313,7 +312,6 @@ Func bindingDataListView($listviewData)
    $arrSteps= StringSplit($listviewData, ',')
    For $rd = 1 to UBound($arrSteps) - 1
 	  $row = StringRegExpReplace($arrSteps[$rd],'\"',"")
-	  ConsoleWrite($row)
 	  $cols = StringSplit($row,'#')
 	  $col2 =''
 	  $col3 =''
@@ -349,8 +347,6 @@ Func handleTrackingLog($trackingLogData)
 EndFunc
 
 Func _ControlZAction()
-   ConsoleWrite("_ControlZAction")
-   ConsoleWrite( @CRLF& $trackingRedoListView& @CRLF)
    if $trackingUndoListView <> '' Then
 	  addTrackingLog(True)
 	  $trackingUndoListView = handleTrackingLog($trackingUndoListView)
@@ -358,8 +354,6 @@ Func _ControlZAction()
 EndFunc
 
 Func _ControlYAction()
-   ConsoleWrite("_ControlYAction")
-   ConsoleWrite( @CRLF& $trackingRedoListView& @CRLF)
    if $trackingRedoListView<>'' Then
 	  addTrackingLog(False)
   	  $trackingRedoListView = handleTrackingLog($trackingRedoListView)
@@ -367,7 +361,9 @@ Func _ControlYAction()
 EndFunc
 
 Func _ControlSAction()
-   ConsoleWrite("_ControlSAction")
+   If $indexStepUpdate<>Null Then
+	  updateStep()
+   EndIf
 EndFunc
 
 
@@ -392,7 +388,6 @@ Func moveDownStep()
 	  updateIndexNumber()
 	  _GUICtrlListView_EndUpdate($stepList)
    EndIf
-
 EndFunc
 
 Func moveUpStep()
@@ -436,7 +431,6 @@ Func updateIndexNumber()
 EndFunc
 
 Func _Arrange_ListStep()
-   ;addTrackingLog()
    If _GUICtrlListView_GetItemCount($stepList) > 0 Then
 	  $Selected = _GUICtrlListView_GetHotItem($stepList)
 	  If $Selected = -1 then Return
@@ -490,20 +484,23 @@ Func updateStep()
 	  $cmbNameOfStepValue = GUICtrlRead($cmbNameOfStep)
 	  $cmbKeywordValue = GUICtrlRead($cmbKeyword)
 	  $cmbSubKeywordValue = GUICtrlRead($cmbSubKeyword)
-
-	  _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbNameOfStepValue , 1)
-	  If StringInStr($common_step,$cmbNameOfStepValue) <= 0 Then
-		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbKeywordValue , 2)
-		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbSubKeywordValue, 3)
+	  If $cmbNameOfStepValue='' Or StringInStr($cmbNameOfStepValue,' ') Or (StringInStr($common_step,$cmbNameOfStepValue) <= 0 And $cmbKeywordValue = '') Then
+		 MsgBox($MB_ICONERROR, "", "Invalid name of step ! Step must be have Keyword !")
 	  Else
-		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, '' , 2)
-		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, '', 3)
-	  EndIf
+		 _GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbNameOfStepValue , 1)
+		 If StringInStr($common_step,$cmbNameOfStepValue) <= 0 Then
+			_GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbKeywordValue , 2)
+			_GUICtrlListView_SetItemText($stepList, $indexStepUpdate, $cmbSubKeywordValue, 3)
+		 Else
+			_GUICtrlListView_SetItemText($stepList, $indexStepUpdate, '' , 2)
+			_GUICtrlListView_SetItemText($stepList, $indexStepUpdate, '', 3)
+		 EndIf
 
-	  ;set state for button add and update
-	  GUICtrlSetState($updateStepBtn, $GUI_HIDE)
-	  GUICtrlSetState($addStepBtn, $GUI_SHOW)
-	  $indexStepUpdate = Null
+		 ;set state for button add and update
+		 GUICtrlSetState($updateStepBtn, $GUI_HIDE)
+		 GUICtrlSetState($addStepBtn, $GUI_SHOW)
+		 $indexStepUpdate = Null
+	  EndIf
    EndIf
 EndFunc
 
@@ -821,17 +818,9 @@ EndFunc
 
 Func getPythonVersion()
    $python_version_cmd = Run(@ComSpec &" /c python --version" , "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
-   Local $python='python'
    Local $consoleOutput = getOutputOfProcess($python_version_cmd)
    $PYTHON_FULLTEXT_VERSION = $consoleOutput
-   Local $aArray = StringRegExp($consoleOutput,'Python\s+(\d).*', $STR_REGEXPARRAYGLOBALMATCH)
-   For $i = 0 To UBound($aArray) - 1
-	   if $aArray[$i]=3 Then
-		   $python='python'
-	   EndIf
-   Next
-
-   Return $python
+   Return 'python'
 EndFunc
 
 Func _IsChecked($idControlID)
