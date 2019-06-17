@@ -205,10 +205,16 @@ Local $PYTHON_FULLTEXT_VERSION =''
 Local $PYTHON_CMD = getPythonVersion()
 
 #EndRegion
-#Region Delete Key detect
+#Region Keyboards detect
+Local $ctrlY = GUICtrlCreateDummy()
+Local $ctrlZ = GUICtrlCreateDummy()
+Local $ctrlS = GUICtrlCreateDummy()
 Local $hDelKey = GUICtrlCreateDummy()
-Dim $AccelKeys[1][2]=[["{DELETE}", $hDelKey]]
+Dim $AccelKeys[4][2]=[["^z", $ctrlZ], ["^y", $ctrlY], ["^s", $ctrlS],["{DELETE}", $hDelKey]]
 GUISetAccelerators($AccelKeys)
+GUICtrlSetOnEvent($ctrlZ, "_ControlZAction")
+GUICtrlSetOnEvent($ctrlY, "_ControlYAction")
+GUICtrlSetOnEvent($ctrlS, "_ControlSAction")
 #EndRegion
 $doubleClickDummy = GUICtrlCreateDummy()
 
@@ -234,18 +240,6 @@ GUISetOnEvent($GUI_EVENT_CLOSE, "_Close")
 GUICtrlSetOnEvent($doubleClickDummy, "listDoubleClick")
 GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
 GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
-
-#Region Ctrl + z, Ctrl + y, Ctrl + s Key
-$ctrlY = GUICtrlCreateDummy()
-$ctrlZ = GUICtrlCreateDummy()
-$ctrlS = GUICtrlCreateDummy()
-Dim $AccelKeys[3][2]=[["^z", $ctrlZ], ["^y", $ctrlY], ["^s", $ctrlS]]
-GUISetAccelerators($AccelKeys)
-GUICtrlSetOnEvent($ctrlZ, "_ControlZAction")
-GUICtrlSetOnEvent($ctrlY, "_ControlYAction")
-GUICtrlSetOnEvent($ctrlS, "_ControlSAction")
-
-#EndRegion
 
 While True
 	;Sleep(200)
@@ -698,6 +692,7 @@ Func aliasNameByCharacter($str, $pattern, $character)
 EndFunc
 
 Func handleMTP($sPath)
+   GuiSetState(@SW_DISABLE, $hGUI)
    ProgressOn("Loading command from MTP file.", "Processing", "0%")
    Local $oWord = _Word_Create()
    Local $oDoc = _Word_DocOpen($oWord, $sPath)
@@ -745,6 +740,7 @@ Func handleMTP($sPath)
    addStepByListCommands($all_commands)
    ProgressSet(100, "Complete", "Complete")
    ProgressOff()
+   GuiSetState(@SW_ENABLE, $hGUI)
 EndFunc
 
 Func addStepByListCommands($all_commands)
@@ -981,6 +977,7 @@ Func duplicateStep()
    GUICtrlCreateListViewItem($listCount + 1 &"|"& $currentArr[2] & "|" & $currentArr[3]&"|"&$currentArr[4], $stepList)
 EndFunc
 Func initForm()
+   GuiSetState(@SW_DISABLE, $hGUI)
    ProgressOn("Initialing tool", "Processing", "0%")
    GUICtrlSetState($updateStepBtn, $GUI_HIDE)
    GUICtrlSetState($addStepBtn, $GUI_SHOW)
@@ -1025,6 +1022,7 @@ Func initForm()
    addTrackingLog()
    ProgressSet(100, "Complete", "Complete")
    ProgressOff()
+   GuiSetState(@SW_ENABLE, $hGUI)
 EndFunc
 
 Func updateButtonStatus()
