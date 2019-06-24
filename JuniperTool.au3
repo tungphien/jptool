@@ -295,15 +295,23 @@ EndFunc
 Func addTrackingLog($isRedo=False)
    If $isRedo = True Then
 	  If $trackingRedoListView<>'' Then
-		 $trackingRedoListView = $trackingRedoListView &'@' & getListViewContent()
+		 If (StringInStr($trackingRedoListView,'@') <= 0 and $trackingRedoListView <> getListViewContent()) or (StringInStr($trackingRedoListView,'@') > 0 and StringInStr($trackingRedoListView, '@' & getListViewContent()) <=0 ) Then
+			$trackingRedoListView = $trackingRedoListView &'@' & getListViewContent()
+		 EndIf
 	  Else
-		  $trackingRedoListView = getListViewContent()
+		 If $trackingRedoListView <> getListViewContent() Then
+			$trackingRedoListView = getListViewContent()
+		 EndIf
 	  EndIf
    Else
 	  If $trackingUndoListView<>'' Then
-		 $trackingUndoListView = $trackingUndoListView &'@' & getListViewContent()
+		 If (StringInStr($trackingUndoListView,'@') <= 0 and $trackingUndoListView <> getListViewContent()) or (StringInStr($trackingUndoListView,'@') > 0 and StringInStr($trackingUndoListView, '@' & getListViewContent()) <=0 ) Then
+			$trackingUndoListView = $trackingUndoListView &'@' & getListViewContent()
+		 EndIf
 	  Else
-		  $trackingUndoListView = getListViewContent()
+		 If $trackingUndoListView <> getListViewContent() Then
+			$trackingUndoListView = getListViewContent()
+		 EndIf
 	  EndIf
    EndIf
 EndFunc
@@ -431,6 +439,7 @@ Func updateIndexNumber()
 EndFunc
 
 Func _Arrange_ListStep()
+   addTrackingLog()
    If _GUICtrlListView_GetItemCount($stepList) > 0 Then
 	  $Selected = _GUICtrlListView_GetHotItem($stepList)
 	  If $Selected = -1 then Return
