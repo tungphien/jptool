@@ -16,6 +16,15 @@
 #include <GuiComboBox.au3>
 #include <Word.au3>
 
+
+; check upgrade
+If checkUpdate() = True Then
+   $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Have new update for this tool! Do you want to upgrade? ")
+   If  $answer = 6 Then ;If select OK
+	 updateApp()
+   EndIf
+EndIf
+
 Global $version = 'Version: 2.6'
 Global $ComboBox_NameOfStep_Changed = False
 Global $indexStepUpdate = Null
@@ -23,6 +32,7 @@ Global $COMMIT_FILE=''
 Global $trackingUndoListView=''
 Global $trackingRedoListView=''
 Opt("GUIOnEventMode", 1);
+
 #Region Loading
 loadingProgress(500,"Load Juniper Tool","Openning Program")
 Func loadingProgress($timeout, $title, $msg)
@@ -183,11 +193,7 @@ GUICtrlSetImage($refreshAgniKeywordBtn,"icons\refresh.ico",221,0)
 
 #Region Tab About
 GUICtrlCreateTabItem("About")
-Local $upgradeBtn = GUICtrlCreateButton("Upgrade", 10, 30,100,30)
-GUICtrlSetTip(-1, "Click here to get the latest update for the tool.", 'Upgrade the tool', $TIP_INFOICON)
-Local $msgUpgradeTxt = GUICtrlCreateLabel("", 120, 40,400,30)
-GUICtrlSetColor ($msgUpgradeTxt, $COLOR_RED )
-Local $lblAbout = GUICtrlCreateLabel("", 10, 70, 600,450)
+Local $lblAbout = GUICtrlCreateLabel("", 10, 30, 600,450)
 GUICtrlSetData($lblAbout,"Author: Phiên Ngô "& @CRLF & @CRLF &"* Prerequisite"& @CRLF &"- install python."& @CRLF &"- install git."& @CRLF & @CRLF &"* Functionals"& @CRLF &"- Format yaml file and re-index unique step."& @CRLF &"- Generate steps for testcase.")
 #EndRegion
 
@@ -217,7 +223,6 @@ GUICtrlSetOnEvent($ctrlS, "_ControlSAction")
 #EndRegion
 $doubleClickDummy = GUICtrlCreateDummy()
 
-GUICtrlSetOnEvent($upgradeBtn, 'updateApp')
 GUICtrlSetOnEvent($duplicateBtn,'duplicateStep')
 GUICtrlSetOnEvent($reloadBtn,'initForm')
 GUICtrlSetOnEvent($refreshAgniKeywordBtn,'refreshAgniKeyword')
@@ -1006,14 +1011,7 @@ Func initForm()
    GUICtrlSetData($outputHyperlink, '')
    GUICtrlSetData($lblPythonVersionValue,$PYTHON_FULLTEXT_VERSION)
    ProgressSet(80, "80%")
-   ; check upgrade button
-   If checkUpdate() = True Then
-	  GUICtrlSetState($upgradeBtn, $GUI_ENABLE)
-	  GUICtrlSetData($msgUpgradeTxt, "Have new update for this tool. Please click Upgrade button")
-   Else
-	  GUICtrlSetData($msgUpgradeTxt, "")
-	  GUICtrlSetState($upgradeBtn, $GUI_DISABLE)
-   EndIf
+
    ; add tracking
    $trackingUndoListView=''
    $trackingRedoListView=''
@@ -1033,6 +1031,7 @@ Func updateButtonStatus()
 EndFunc
 
 Func checkUpdate()
+   ProgressOn("Checking for update tool", "Checking...", "0%")
    $isNeedToUpdate = False
    if FileExists('.git')==0 Then
 	  $pID = Run(@ComSpec & " /c " & "git init & git remote add origin https://github.com/tungphien/jtool_update.git", "", @SW_HIDE, $STDERR_CHILD + $STDOUT_CHILD)
@@ -1051,31 +1050,29 @@ Func checkUpdate()
    WriteLog($consoleOutput)
    $commit_id = getRegexPatten($consoleOutput,'commit\s*(.*)\n*Author')
    $commit_file_name = 'commit-'& $commit_id &'.log'
+   ProgressSet(80, "80%")
    if FileExists($commit_file_name)==0 Then
 	  $COMMIT_FILE = $commit_file_name
 	  $isNeedToUpdate = True
    Else
 	  $isNeedToUpdate =False
    EndIf
-
+   ProgressSet(100, "Complete", "Complete")
+   ProgressOff()
    Return $isNeedToUpdate
-
 EndFunc
 
 Func updateApp()
-   $answer = MsgBox(BitOR($MB_YESNO, $MB_ICONQUESTION), "Confirm", "Do you want to install upgrade?")
-   If  $answer = 6 Then ;If select OK
-	  GUISetState(@SW_HIDE, $hGUI)
-	  loadingProgress(300,"Upgrade the Tool","Upgrading...")
-	  Local $prevCommitFiles = _FileListToArray(@ScriptDir, "commit-*.log")
-	  For $i = 0 To UBound($prevCommitFiles) - 1
-		 FileDelete($prevCommitFiles[$i])
-	  Next
-	  WriteLog('', $COMMIT_FILE)
-	  FileSetAttrib($COMMIT_FILE,"+H")
-	  Run("updater.exe", "")
-	  _Close()
-   EndIf
+   GUISetState(@SW_HIDE, $hGUI)
+   loadingProgress(300,"Upgrade the Tool","Upgrading...")
+   Local $prevCommitFiles = _FileListToArray(@ScriptDir, "commit-*.log")
+   For $i = 0 To UBound($prevCommitFiles) - 1
+	  FileDelete($prevCommitFiles[$i])
+   Next
+   WriteLog('', $COMMIT_FILE)
+   FileSetAttrib($COMMIT_FILE,"+H")
+   Run("updater.exe", "")
+   _Close()
 EndFunc
 
 Func WriteLog($content, $fileName='app.log')
